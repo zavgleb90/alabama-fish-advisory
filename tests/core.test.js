@@ -1,0 +1,25 @@
+'use strict';
+const assert = require('node:assert/strict');
+const core = require('../app.js');
+const nearly = (actual, expected, eps = 1e-8) => assert.ok(Math.abs(actual - expected) < eps, `${actual} differs from ${expected}`);
+assert.equal(core.demoOnly, true);
+assert.equal(core.availableMeasurementRecords, 0);
+assert.equal(core.availableAdvisoryRecords, 0);
+assert.equal(core.METHYLMERCURY_RFD_UG_KG_DAY, 0.1);
+// Worked arithmetic example: 70kg × 0.1 µg/kg/day ÷ 0.35 µg/g = 20 g/day.
+nearly(core.consumptionLimitGramsDay(70, 0.35), 20);
+nearly(core.hypotheticalMealsMonth(70, 0.35, 8), 20 * core.DAYS_PER_MONTH / (8 * core.GRAMS_PER_OUNCE));
+nearly(core.kgFrom(154.3235835, 'lb'), 70, 0.001);
+assert.deepEqual(core.exampleRange(0.25), { low: 0.15, center: 0.25, high: 0.35 });
+assert.equal(core.referencePortionOz(2), 1);
+assert.equal(core.referencePortionOz(6), 2);
+assert.equal(core.referencePortionOz(9), 3);
+assert.equal(core.referencePortionOz(12), 4);
+assert.equal(core.referencePortionOz(14), 8);
+assert.equal(core.referencePortionOz(45), 8);
+assert.throws(() => core.consumptionLimitGramsDay(70, 0), RangeError);
+assert.throws(() => core.consumptionLimitGramsDay(0, 0.2), RangeError);
+assert.throws(() => core.hypotheticalMealsMonth(70, 0.2, 0), RangeError);
+assert.throws(() => core.referencePortionOz(-1), RangeError);
+assert.throws(() => core.kgFrom(-3, 'lb'), RangeError);
+console.log('PASS: 17 core checks; all calculations remain labeled demonstration-only');
