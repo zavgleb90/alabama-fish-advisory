@@ -1,0 +1,44 @@
+{
+  "_note": "DOCUMENTATION-ONLY SCHEMA. This is not real data and is not loaded by the website.",
+  "waterbody": {
+    "id": "waterbody_unique_id",
+    "name": "Waterbody name",
+    "geometry_geojson": "Polygon/MultiPolygon/LineString; validated geographic boundaries",
+    "state": "AL"
+  },
+  "fish_sample": {
+    "sample_id": "sample_unique_id",
+    "waterbody_id": "waterbody_unique_id",
+    "species_id": "normalized_species_id",
+    "latitude": null,
+    "longitude": null,
+    "sample_date": "YYYY-MM-DD",
+    "mercury_total_ug_g_wet_weight": null,
+    "mercury_methyl_ug_g_wet_weight": null,
+    "mercury_method": "analyzed or defensible conversion",
+    "size_cm": null,
+    "quality_flags": [],
+    "source": "citation/data provenance"
+  },
+  "official_advisory": {
+    "advisory_id": "state_advisory_id",
+    "source_url": "official current publication URL",
+    "effective_date": "YYYY-MM-DD",
+    "waterbody_id": "waterbody_unique_id",
+    "species_ids": [],
+    "population_group": "adults / at-risk / other",
+    "meal_limit_type": "do-not-eat / rate / other",
+    "raw_document_text": "verbatim advisory wording"
+  },
+  "prediction": {
+    "waterbody_id": "waterbody_unique_id",
+    "species_id": "normalized_species_id",
+    "model_version": "validated_version",
+    "predicted_ug_g_wet_weight": null,
+    "prediction_interval_lower": null,
+    "prediction_interval_upper": null,
+    "interval_coverage": null,
+    "validation_report": "link or path to documented model evaluation",
+    "status": "MODELED, not measured"
+  }
+}

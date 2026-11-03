@@ -1,102 +1,101 @@
 <!doctype html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="A demonstration of a future Alabama fish advisory decision tool. No real fish consumption recommendations are available in this prototype.">
-  <meta name="theme-color" content="#0b3151">
-  <title>Alabama Fish Advisor · Research Prototype</title>
-  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <meta name="description" content="Alabama Fish Advisory Decision Support research demonstration. Explore catch locations and an EPA-based worked example. No real mercury data or consumption advice are provided.">
+  <meta name="theme-color" content="#061424">
+  <title>Alabama Fish Advisory · Scientific Dashboard V2</title>
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
   <link rel="preconnect" href="https://unpkg.com">
+  <link rel="preconnect" href="https://a.basemaps.cartocdn.com">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="styles.css">
-  <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script defer src="app.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+  <script src="core.js" defer></script>
+  <script src="app.js" defer></script>
 </head>
 <body>
-  <a href="#main" class="skip-link">Skip to main content</a>
-  <div class="prototype-banner" role="status"><span class="pulse-dot"></span> RESEARCH PROTOTYPE <span class="banner-divider">·</span> No Alabama measurements or official advisory records loaded <span class="banner-divider">·</span> Not for food safety decisions</div>
-  <header class="site-header">
-    <div class="header-shell">
-      <a class="brand" href="#home" id="brandHome" aria-label="Alabama Fish Advisor home">
-        <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 80 70"><path d="M7 42C24 18 47 17 62 33L75 22V53L61 42C44 60 22 60 7 42Z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/><circle cx="22" cy="36" r="3" fill="currentColor"/><path d="M36 27L44 10L50 28M38 47L49 58M30 39H61" stroke="currentColor" stroke-width="3" stroke-linecap="round" fill="none"/></svg></span>
-        <span class="brand-copy"><strong>Alabama <em>Fish Advisor</em></strong><small>CATCH <b>·</b> CHECK <b>·</b> UNDERSTAND</small></span>
-      </a>
-      <nav class="top-nav" aria-label="Main navigation">
-        <button type="button" class="nav-link current" data-nav="home"><span aria-hidden="true">⌂</span> Check a catch</button>
-        <button type="button" class="nav-link" data-nav="places"><span aria-hidden="true">⌖</span> Map & places</button>
-        <button type="button" class="nav-link" data-nav="science"><span aria-hidden="true">◈</span> The science</button>
-        <button type="button" class="nav-link" data-nav="help"><span aria-hidden="true">?</span> Help</button>
-      </nav>
-      <div class="header-actions" role="group" aria-label="Website appearance">
-        <button type="button" class="theme-button selected" id="lightTheme" aria-pressed="true" title="Design V2 · Light">☀ <span>Light</span></button>
-        <button type="button" class="theme-button" id="darkTheme" aria-pressed="false" title="Design V1 · Dark">☾ <span>Dark</span></button>
+<a class="skip-link" href="#workspace">Skip to advisory checker</a>
+<div class="research-bar" role="note"><span class="live-dot"></span><b>RESEARCH PROTOTYPE · V2</b><span class="research-divider">/</span> No measured mercury data, validated predictions, or official advisory rules loaded. <b>Do not use for eating decisions.</b></div>
+<header class="masthead" id="top">
+  <div class="mast-inner">
+    <a class="identity" href="#top" aria-label="Alabama Fish Advisory home">
+      <span class="fish-logo" aria-hidden="true"><svg viewBox="0 0 92 72" fill="none"><path d="M5 39C21 18 54 13 69 36L86 22V54L69 41C52 61 21 64 5 39Z" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/><circle cx="27" cy="35" r="3.5" fill="currentColor"/><path d="M43 21L54 5L59 27M43 57L56 70M21 45L59 45" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></span>
+      <span class="identity-copy"><span class="identity-name">Alabama <em>Fish Advisory</em><span class="lightword"> Decision Support</span></span><span class="identity-tag">CATCH <span>•</span> ASSESS <span>•</span> EAT SAFER</span></span>
+    </a>
+    <div class="mast-side"><span class="eyebrow">A SCIENCE-LED PUBLIC HEALTH RESEARCH TOOL</span><span>Alabama waters. Clearer decisions.</span></div>
+  </div>
+</header>
+<nav class="nav" aria-label="Main navigation"><div class="nav-inner">
+  <a class="nav-item active" href="#workspace" data-nav="workspace"><span aria-hidden="true">⌂</span> Advisory tool</a>
+  <a class="nav-item" href="#map-section" data-nav="map-section"><span aria-hidden="true">⌖</span> Map & layers</a>
+  <a class="nav-item" href="#modeling" data-nav="modeling"><span aria-hidden="true">▥</span> Predictive modeling</a>
+  <a class="nav-item" href="#methods" data-nav="methods"><span aria-hidden="true">◈</span> Data & methods</a>
+  <a class="nav-item" href="#guidance" data-nav="guidance"><span aria-hidden="true">✚</span> Health guidance</a>
+  <a class="nav-item" href="#about" data-nav="about"><span aria-hidden="true">ⓘ</span> About</a>
+  <span class="nav-spacer"></span>
+  <button type="button" class="nav-theme" id="themeToggle" title="Switch appearance" aria-label="Switch between light and dark theme" aria-pressed="false">☼ <span>Light mode</span></button>
+</div></nav>
+<main>
+<div class="content-shell">
+  <div class="intro-row"><div><span class="section-kicker">ENVIRONMENTAL HEALTH · ALABAMA</span><h1>Explore the water. <strong>Check your catch.</strong></h1><p>The future home for location-specific fish advisories, mercury monitoring, and personalized consumption guidance.</p></div><a class="official-link" href="https://www.alabamapublichealth.gov/tox/fish-advisories.html" target="_blank" rel="noopener noreferrer">Check current official advisories <span aria-hidden="true">↗</span></a></div>
+  <div class="dashboard" id="workspace">
+    <section class="panel map-panel" id="map-section" aria-labelledby="mapTitle">
+      <div class="panel-heading"><div><span class="section-kicker">SPATIAL EXPLORER</span><h2 id="mapTitle">Alabama Fish Advisory Map</h2><p>Explore lakes and rivers. Select a marker to set the catch location.</p></div><span class="panel-tag">INTERACTIVE</span></div>
+      <div class="layer-toolbar" role="group" aria-label="Map data layers">
+        <button class="layer-btn selected" data-layer="coverage" aria-pressed="true" type="button">◉ Locations</button>
+        <button class="layer-btn" data-layer="demo-mercury" aria-pressed="false" type="button">◐ Mercury preview</button>
+        <button class="layer-btn" data-layer="priority" aria-pressed="false" type="button">◇ Monitoring preview</button>
       </div>
-    </div>
-  </header>
-
-  <main id="main">
-    <section class="hero" id="home" aria-labelledby="mainTitle">
-      <div class="hero-content">
-        <div class="eyebrow"><span class="eyebrow-symbol">✦</span> A clearer way to understand fish consumption guidance</div>
-        <h1 id="mainTitle">Can I eat <span>this fish?</span></h1>
-        <p>Pick your fish, choose where you caught it, and tell us who will eat it. See how a science-based fish advisory could work.</p>
-        <div class="hero-badges"><span>✳ Easy to use</span><span>♧ Alabama waters</span><span>◉ Your details stay in your browser</span></div>
+      <div class="map-stage">
+        <div id="map" role="application" aria-label="Interactive Alabama map showing example fishing locations"></div>
+        <div id="mapFallback" hidden class="map-fallback"><div>⌖</div><strong>Map tiles unavailable</strong><p>You can still select your location from the catch form. The interactive map needs an internet connection.</p></div>
+        <div class="map-overlay top-overlay"><span class="map-indicator"></span><span id="mapStatus">PLACEHOLDER LOCATIONS ONLY</span></div>
+        <div class="map-overlay legend" id="mapLegend"><h3 id="legendTitle">Map key</h3><div id="legendBody"><div><i class="legend-mark cyan"></i> Example fishing location</div><div><i class="legend-mark hollow"></i> No verified advisory data</div></div><small id="legendNote">Markers are approximate, not sampling sites or advisory boundaries.</small></div>
+        <button id="resetMap" type="button" class="reset-map" title="Show Alabama map extent" aria-label="Reset Alabama map extent">⌖</button>
+        <div class="map-watermark" id="mapWatermark">RESEARCH DEMONSTRATION</div>
       </div>
-      <div class="hero-visual" aria-hidden="true">
-        <svg viewBox="0 0 530 270" role="presentation"><defs><linearGradient id="riverG" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#38b4d2"/><stop offset="1" stop-color="#096e9b"/></linearGradient></defs><path d="M0 170C90 128 137 160 208 136S353 108 530 130V270H0Z" fill="#74bb9b" opacity=".28"/><path d="M0 202C70 170 164 198 236 175S405 160 530 175V270H0Z" fill="#367b79" opacity=".3"/><path d="M0 222C73 186 156 228 247 210S409 195 530 210V270H0Z" fill="url(#riverG)" opacity=".8"/><path d="M0 244C130 212 177 253 310 233S457 231 530 224" stroke="#b9f3f5" stroke-width="4" fill="none" opacity=".64"/><path d="M395 170L415 96L434 170M414 96V45M414 46L469 90" fill="none" stroke="#c9ecdf" stroke-width="5" stroke-linecap="round"/><circle cx="418" cy="47" r="9" fill="#c9ecdf"/><path d="M416 78L381 119M421 78L448 111M382 115L371 150M449 111L467 146" fill="none" stroke="#c9ecdf" stroke-width="6" stroke-linecap="round"/><path d="M414 65L409 101L444 138" stroke="#c9ecdf" stroke-width="13" fill="none" stroke-linecap="round"/><path d="M468 92L515 37" stroke="#f7df98" stroke-width="2"/><path d="M512 37C525 35 520 52 523 60" stroke="#f7df98" stroke-width="2" fill="none"/><path d="M144 160C166 135 197 139 219 159L243 141V182L220 164C192 188 165 182 144 160Z" stroke="#d5f5ed" fill="none" stroke-width="4"/><circle cx="158" cy="155" r="4" fill="#d5f5ed"/><path d="M185 145L190 128L199 145" stroke="#d5f5ed" stroke-width="4" fill="none"/></svg>
-        <div class="hero-note"><span>◉</span><div><strong>Built for real-world decisions</strong><small>Scientific method first. Simple language always.</small></div></div>
-      </div>
+      <div class="map-bottom"><span><b id="mapLocationCount">12</b> example places · <span id="selectedMapText">Select a lake or river</span></span><span>Basemap © OpenStreetMap · CARTO</span></div>
+      <div class="map-insight"><span class="map-insight-icon">⌁</span><div><h3>Built for future mercury data</h3><p>Layer controls are ready for observations, modeled concentrations, and monitoring priorities. Current colored overlays are <b>fictional previews</b> only.</p></div></div>
     </section>
-
-    <div class="page-shell">
-      <div class="notice notice-important" role="note"><span class="notice-icon">!</span><div><strong>This website is a demonstration, not a fish safety advisory.</strong><p>We have not loaded local measurements or checked location-specific restrictions. Do not use a demonstration number to decide whether a caught fish is safe. <a href="https://www.alabamapublichealth.gov/tox/fish-advisories.html" target="_blank" rel="noopener noreferrer">Check Alabama's official, current advisories ↗</a></p></div></div>
-
-      <section class="workspace" aria-label="Fish advisory demonstration">
-        <div class="workspace-head"><div><span class="section-tag">THE ADVISORY CHECKER</span><h2>Four simple steps.</h2><p>Start with your catch. The calculation is only a worked example until verified data are added.</p></div><span class="step-time"><span aria-hidden="true">◷</span> No sign-in needed</span></div>
-        <ol class="stepper" aria-label="Progress">
-          <li><button type="button" class="step-button active" data-step="1" aria-current="step"><b>1</b><span><small>STEP ONE</small>Choose your fish</span></button></li>
-          <li><button type="button" class="step-button" data-step="2" disabled><b>2</b><span><small>STEP TWO</small>Catch location</span></button></li>
-          <li><button type="button" class="step-button" data-step="3" disabled><b>3</b><span><small>STEP THREE</small>About you</span></button></li>
-          <li><button type="button" class="step-button" data-step="4" disabled><b>4</b><span><small>STEP FOUR</small>Example result</span></button></li>
-        </ol>
-
-        <div class="step-panel" id="step1" aria-labelledby="s1Title">
-          <div class="step-topline"><div><div class="panel-counter">01 <span>/ 04</span></div><h3 id="s1Title">What fish did you catch?</h3><p>Choose a fish. Pictures are illustrative; they are not identification guides.</p></div><div class="step-illustration" aria-hidden="true">🐟</div></div>
-          <div class="step-layout fish-layout">
-            <div><label class="input-label" for="fishSearch">Find a fish species</label><div class="search-wrap"><span aria-hidden="true">⌕</span><input id="fishSearch" type="search" placeholder="Try “bass”, “catfish”, or “crappie”" autocomplete="off"></div><div id="fishGrid" class="fish-grid" aria-label="Fish species"></div><p class="field-note">These choices do not mean that sampling or advisory records are available for the species.</p></div>
-            <aside class="context-card"><div class="context-art" aria-hidden="true">〰 <span>🐠</span> 〰</div><span class="mini-tag">WHY WE ASK</span><h4>Different fish can carry different levels of contaminants.</h4><p>Where a fish lives, what it eats, and how long it grows all matter. The actual dataset will help us make these distinctions.</p><div class="selected-line"><span>Selected fish</span><strong id="fishSelected">None yet</strong></div></aside>
+    <div class="right-column">
+      <section class="panel checker-panel" aria-labelledby="formTitle"><div class="panel-heading compact"><div><span class="section-kicker">CATCH CHECKER · THREE INPUT STEPS</span><h2 id="formTitle">Find a Fish Consumption Recommendation</h2><p>Choose a fish and catch location, then enter the information needed for a worked example.</p></div><span class="target-mark" aria-hidden="true">◎</span></div>
+        <div class="workflow-indicators" aria-label="Checking process"><span><b>01</b> Species</span><span class="chev">→</span><span><b>02</b> Location</span><span class="chev">→</span><span><b>03</b> About you</span><span class="chev">→</span><span class="last"><b>04</b> Example result</span></div>
+        <form id="checkerForm" novalidate>
+          <div class="form-grid">
+            <div class="field"><label for="species">01 / Fish species <span class="req">*</span></label><div class="field-control"><span aria-hidden="true">🐟</span><select id="species" required><option value="">Choose a fish</option></select></div></div>
+            <div class="field"><label for="location">02 / Catch location <span class="req">*</span></label><div class="field-control"><span aria-hidden="true">⌖</span><select id="location" required><option value="">Choose a lake or river</option></select></div></div>
+            <div class="field"><label for="weight">03 / Body weight <span class="req">*</span></label><div class="field-control"><span aria-hidden="true">♙</span><input id="weight" type="number" min="4" max="650" step="0.1" inputmode="decimal" placeholder="For example, 160" required><select id="weightUnit" aria-label="Body weight unit"><option value="lb">lb</option><option value="kg">kg</option></select></div></div>
+            <div class="field"><label for="age">Age (years) <span class="req">*</span></label><div class="field-control"><span aria-hidden="true">◷</span><input id="age" type="number" min="1" max="120" step="1" inputmode="numeric" placeholder="Age in years" required></div></div>
+            <div class="field"><label for="lifeStage">Pregnancy or breastfeeding</label><div class="field-control"><span aria-hidden="true">♡</span><select id="lifeStage"><option value="general">No / Not applicable</option><option value="pregnant">Pregnant</option><option value="planning">Planning a pregnancy</option><option value="breastfeeding">Breastfeeding</option></select></div></div>
+            <div class="field"><label for="sex">Sex (optional)</label><div class="field-control"><span aria-hidden="true">♧</span><select id="sex"><option value="unspecified">Prefer not to say</option><option value="female">Female</option><option value="male">Male</option></select></div></div>
           </div>
-          <div class="step-footer"><span>1 of 4 <span class="footer-tip">· Choose one fish to continue</span></span><button type="button" class="primary-btn" id="to2" disabled>Next: catch location <span aria-hidden="true">→</span></button></div>
-        </div>
-
-        <div class="step-panel" id="step2" aria-labelledby="s2Title" hidden>
-          <div class="step-topline"><div><div class="panel-counter">02 <span>/ 04</span></div><h3 id="s2Title">Where did you catch it?</h3><p>Pick a lake or river from this demonstration list, or tap its map marker.</p></div><div class="step-illustration" aria-hidden="true">⌖</div></div>
-          <div class="step-layout location-layout"><div><label class="input-label" for="locationSearch">Find a fishing place</label><div class="search-wrap"><span aria-hidden="true">⌕</span><input id="locationSearch" type="search" placeholder="Search a lake or river" autocomplete="off"></div><div id="locationList" class="location-list" aria-label="Fishing locations"></div><p class="field-note">Locations and pins are examples only. Boundaries of official advisories are <strong>not</strong> displayed.</p><div class="selected-line location-selected"><span>Selected place</span><strong id="locationSelected">None yet</strong></div></div><div class="map-card"><div class="map-header"><strong>Explore Alabama</strong><span>Interactive location map</span></div><div id="alabamaMap" aria-label="Map with example Alabama fishing locations"></div><div id="mapFallback" hidden><svg viewBox="0 0 300 390" aria-hidden="true"><path d="M82 16L221 11L214 66L234 110L218 179L247 301L209 302L198 353L160 355L137 377L112 328L67 318L81 198L63 114Z" fill="#add8cb" stroke="#3e9bad" stroke-width="5" stroke-linejoin="round"/><path d="M95 56C150 76 118 123 187 142S129 209 211 245M131 19C121 112 170 150 116 223S177 306 167 344" fill="none" stroke="#3c9fd3" stroke-width="7" stroke-linecap="round"/><circle cx="184" cy="123" r="12" fill="#06a8c9"/><circle cx="166" cy="249" r="12" fill="#06a8c9"/><circle cx="119" cy="70" r="12" fill="#06a8c9"/><text x="150" y="194" text-anchor="middle" fill="#194e67" font-size="22" font-weight="700">ALABAMA</text></svg><p>Map tiles are unavailable. Choose a location from the list.</p></div><div class="map-footer"><span>◉ Example places only</span><span>Map © OpenStreetMap contributors</span></div></div></div>
-          <div class="step-footer"><button type="button" class="secondary-btn" id="back2">← Back</button><button type="button" class="primary-btn" id="to3" disabled>Next: about you <span aria-hidden="true">→</span></button></div>
-        </div>
-
-        <div class="step-panel" id="step3" aria-labelledby="s3Title" hidden>
-          <div class="step-topline"><div><div class="panel-counter">03 <span>/ 04</span></div><h3 id="s3Title">Who will eat this fish?</h3><p>These details affect a possible exposure calculation. Nothing you enter is saved or sent to us.</p></div><div class="step-illustration" aria-hidden="true">♧</div></div>
-          <form id="personForm" novalidate><div class="form-grid"><div class="field"><label for="age">Age <span class="required">*</span></label><div class="form-inner"><input id="age" type="number" min="1" max="120" step="1" placeholder="Years" required inputmode="numeric"><span class="unit">years</span></div><small>For children, smaller portions are used.</small></div><div class="field"><label for="weight">Body weight <span class="required">*</span></label><div class="form-inner"><input id="weight" type="number" min="1" max="650" step="0.1" placeholder="Enter weight" required inputmode="decimal"><select id="weightUnit" aria-label="Weight unit"><option value="lb">lb</option><option value="kg">kg</option></select></div><small>Weight is used in the EPA exposure equation.</small></div><div class="field"><label for="profileSex">Sex (optional)</label><select id="profileSex"><option value="unspecified">Prefer not to say</option><option value="female">Female</option><option value="male">Male</option></select><small>Sex does not directly change the example formula.</small></div><div class="field"><label for="lifeStage">Additional protection may apply</label><select id="lifeStage"><option value="general">None of these apply</option><option value="pregnant">Pregnant</option><option value="planning">Planning to become pregnant</option><option value="breastfeeding">Breastfeeding / nursing</option></select><small>Alabama identifies children under 14 and these groups as at risk.</small></div><div class="field"><label for="mealSize">One meal (raw fish)</label><select id="mealSize"><option value="auto">Use reference portion for age</option><option value="1">1 oz</option><option value="2">2 oz</option><option value="3">3 oz</option><option value="4">4 oz</option><option value="6">6 oz</option><option value="8">8 oz</option></select><small id="mealHint">Alabama uses 8 oz raw fish for a standard advisory meal.</small></div></div><div class="form-important"><span aria-hidden="true">ⓘ</span><div><strong>About children and pregnancy</strong><p>Actual advice for at-risk groups must follow current Alabama advisories. This prototype does not determine that any fish is safe for these groups.</p></div></div><p id="formError" class="error" role="alert" hidden></p><div class="step-footer"><button type="button" class="secondary-btn" id="back3">← Back</button><button type="submit" class="primary-btn">Show the example calculation <span aria-hidden="true">→</span></button></div></form>
-        </div>
-
-        <div class="step-panel" id="step4" aria-labelledby="s4Title" hidden>
-          <div class="step-topline result-topline"><div><div class="panel-counter">04 <span>/ 04</span></div><h3 id="s4Title">Here's how it could work.</h3><p>Real advice will appear here after measurements, advisories, and model validation are added.</p></div><span class="demo-flag">DEMONSTRATION RESULT</span></div>
-          <div class="result-warning"><span aria-hidden="true">!</span><div><strong>Safety status: UNKNOWN — do not rely on this result.</strong><p>No species- or location-specific measurements or official advisory rules are loaded. The numeric result below uses the <strong>same invented example concentration for every fish and location</strong>.</p></div></div>
-          <div class="result-summary"><div><span class="mini-tag">YOUR SELECTION</span><h4 id="resultFish">—</h4><p id="resultLocation">—</p><p id="resultPerson">—</p></div><div class="unknown-status"><span class="status-icon">?</span><div><b>Official advisory status</b><strong>Not yet checked</strong><a target="_blank" rel="noopener noreferrer" href="https://www.alabamapublichealth.gov/tox/fish-advisories.html">Read current Alabama advisories ↗</a></div></div></div>
-          <div class="result-primary"><div class="result-overline">HYPOTHETICAL MERCURY-ONLY CALCULATION</div><div class="result-metric"><strong id="resultNumber">—</strong><div><span id="resultUnit">—</span><small id="resultServing">—</small></div></div><p>This is a mathematical demonstration, <strong>not</strong> a meal-frequency recommendation for the selected fish.</p></div>
-          <div class="result-two-cols"><div class="insight-card"><div class="insight-head"><span class="insight-symbol">≈</span><div><h4>Why is there a range?</h4><p>We don't yet know the actual concentration.</p></div></div><div class="uncertainty-track"><div class="track-range" id="trackRange"><span id="pointNominal"></span></div></div><div class="range-stats"><div><span>Example low</span><b id="lowC">—</b></div><div><span>Example center</span><b id="centerC">—</b></div><div><span>Example high</span><b id="highC">—</b></div></div><p class="smallprint">This low–high interval is an invented scenario, <strong>not</strong> a 95% confidence interval or validated prediction. The displayed count uses the high concentration for caution.</p></div><div class="insight-card"><div class="insight-head"><span class="insight-symbol">▤</span><div><h4>Explore the example</h4><p>Change the made-up concentration to see how the formula responds.</p></div></div><label for="demoConcentration" class="slider-label">Illustrative mercury concentration <b id="demoConcentrationValue">0.25 µg/g</b></label><input type="range" id="demoConcentration" min="0.05" max="1.00" step="0.05" value="0.25"><div class="slider-endpoints"><span>0.05</span><span>1.00 µg/g</span></div><p class="smallprint">Scenario band: ±40% around the illustrative value. This is not actual field data.</p></div></div>
-          <div class="calculation-explainer"><span class="science-icon">∑</span><div><h4>What is the calculation?</h4><p id="calcDetails">—</p><p>The method follows EPA's noncancer consumption-rate framework using a methylmercury reference dose of 0.1 µg/kg/day. It does not account for other contaminants, other fish meals, or current local restrictions.</p><button type="button" class="text-button" data-nav="science">See method and assumptions ↗</button></div></div>
-          <div class="result-actions"><button type="button" class="secondary-btn" id="back4">← Edit details</button><button type="button" class="secondary-btn" id="startOver">↺ Start over</button><a class="official-btn" href="https://www.alabamapublichealth.gov/tox/fish-advisories.html" target="_blank" rel="noopener noreferrer">Check official advisories ↗</a></div>
+          <div class="form-bottom"><details id="moreOptions"><summary>⌄ More options <small>Serving size and illustrative concentration</small></summary><div class="advanced-grid"><div class="field"><label for="mealSize">Reference portion (raw weight)</label><div class="field-control"><span aria-hidden="true">◫</span><select id="mealSize"><option value="auto">Age-based demonstration portion</option><option value="4">4 oz</option><option value="6">6 oz</option><option value="8">8 oz</option></select></div></div><div class="field"><label for="demoConcentration">Imaginary mercury level (µg/g)</label><div class="field-control"><span aria-hidden="true">⚗</span><select id="demoConcentration"><option value="0.10">0.10 · Example</option><option value="0.25" selected>0.25 · Example</option><option value="0.50">0.50 · Example</option><option value="0.75">0.75 · Example</option></select></div></div></div></details><div class="form-actions"><button class="muted-button" id="clearForm" type="button">↺ Reset inputs</button><button class="primary-button" type="submit">⌕ Run demonstration <span>→</span></button></div></div>
+          <p id="validationMessage" class="validation-message" role="alert" hidden></p>
+        </form>
+      </section>
+      <section class="panel result-panel" id="results" aria-labelledby="resultTitle"><div class="panel-heading compact"><div><span class="section-kicker">OUTPUT · NOT AN OFFICIAL ADVISORY</span><h2 id="resultTitle">Fish Advisory Result</h2></div><span class="status-chip muted" id="resultStatus">NOT ASSESSED</span></div>
+        <div id="emptyResult" class="result-empty"><div class="outline-fish" aria-hidden="true"><svg viewBox="0 0 200 110"><path d="M12 55C46 13 105 12 147 49L189 24V86L147 61C101 101 45 98 12 55Z" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="45" cy="49" r="5" fill="currentColor"/><path d="M68 31L94 5L110 32M74 78L103 106M24 69L44 69" fill="none" stroke="currentColor" stroke-width="3"/></svg></div><div><strong>Your catch. Your location. Your details.</strong><p>Fill in the form above to see an <b>illustrative</b> calculation. Real consumption advice will be available only after verified data and expert review.</p></div></div>
+        <div id="filledResult" hidden>
+          <div class="result-fish"><div class="fish-illustration" id="resultFishArt" aria-hidden="true"></div><div class="result-fish-meta"><span class="small-caps">SELECTED CATCH</span><h3 id="resultFishName">—</h3><p id="resultPlace">—</p></div><div class="result-unclear"><small>OFFICIAL ADVISORY</small><b>Not loaded</b><span>Unknown ≠ safe</span></div></div>
+          <div class="result-metric-row"><div class="metric-main"><div class="small-caps">HYPOTHETICAL EPA METHYLMERCURY CALCULATION</div><div><strong id="mealCount">—</strong><span>illustrative meals<br>per month</span></div><p id="resultMealInfo">—</p></div><div class="metric-badge"><span class="metric-alert">!</span><div><small>PUBLIC SAFETY STATUS</small><b>NOT DETERMINED</b><span>Not safe to use for food decisions</span></div></div></div>
+          <div class="result-data-grid"><div class="science-plot"><div class="result-small-title">Illustrative contaminant scenarios <span>NOT A MODEL PREDICTION</span></div><svg id="scenarioChart" viewBox="0 0 490 155" role="img" aria-label="Illustrative low, center and high mercury scenarios"><line x1="42" x2="465" y1="112" y2="112" stroke="currentColor" stroke-width="1" opacity=".45"/><rect id="chartBand" x="150" y="33" width="150" height="79" rx="6" opacity=".22" fill="#2ac7e6"/><path d="M44 107C100 106 127 60 166 46S240 12 288 44S350 107 461 107" fill="none" stroke="#32c8ec" stroke-width="3"/><line x1="249" y1="22" x2="249" y2="114" stroke="#d0edfb" stroke-dasharray="5 5"/><g fill="currentColor" font-size="12"><text x="38" y="132">LOW</text><text x="228" y="132">CENTER</text><text x="428" y="132">HIGH</text></g></svg><p>This curve is an <b>illustration</b>, not a measured distribution, estimated confidence interval, or calibrated prediction.</p></div><div class="uncertainty-card"><div class="result-small-title">Example inputs & uncertainty</div><div class="kv"><span>Example concentration</span><b id="resultConcentration">—</b></div><div class="kv"><span>Imaginary scenario interval</span><b id="resultBand">—</b></div><div class="kv"><span>Confirmed monitoring samples</span><b>0 loaded</b></div><div class="kv"><span>Verified prediction confidence</span><b>Unavailable</b></div><button class="text-link" id="showMath" type="button">How was this calculated? ↗</button></div></div>
+          <div class="result-disclaimer">ⓘ <span>These numbers are mathematical examples only. They do not represent this fish or waterbody. Always check the <a href="https://www.alabamapublichealth.gov/tox/fish-advisories.html" target="_blank" rel="noopener noreferrer">official Alabama advisory</a> before eating locally caught fish.</span></div>
         </div>
       </section>
-
-      <section class="support-grid" aria-label="Additional information"><article><div class="support-icon">◈</div><div><h3>Based on published methods</h3><p>We can implement the EPA's exposure calculations without inventing real safety findings.</p><button type="button" class="text-button" data-nav="science">Learn about the method →</button></div></article><article><div class="support-icon">⌖</div><div><h3>Built around Alabama waters</h3><p>Location selection and a map are ready for future measurement and advisory data.</p><button type="button" class="text-button" data-nav="places">Explore the map →</button></div></article><article><div class="support-icon">♙</div><div><h3>Designed for everyone</h3><p>Simple steps, plain language, large buttons, and a mobile-friendly layout.</p><button type="button" class="text-button" data-nav="help">Read quick questions →</button></div></article></section>
+      <div class="action-tabs" role="group" aria-label="Learn about this tool"><button type="button" data-dialog="method">ⓘ Why this method?</button><button type="button" data-dialog="uncertainty">⌁ Understanding uncertainty</button><button type="button" data-dialog="alternatives">☘ Safer alternatives</button></div>
     </div>
-  </main>
-  <footer class="footer"><div class="footer-inner"><div><strong>Alabama Fish Advisor</strong><p>Independent research prototype · Not an Alabama government service</p></div><div><a href="https://www.alabamapublichealth.gov/tox/fish-advisories.html" target="_blank" rel="noopener noreferrer">Official Alabama advisories ↗</a><a href="https://www.alabamapublichealth.gov/tox/assets/2026_fishadvisory.pdf" target="_blank" rel="noopener noreferrer">2026 advisory publication ↗</a></div></div></footer>
-
-  <dialog id="infoDialog" aria-labelledby="dialogTitle"><div class="dialog-head"><h2 id="dialogTitle">About the science</h2><button id="closeDialog" aria-label="Close information panel" type="button">×</button></div><div id="dialogBody"></div></dialog>
+  </div>
+  <div class="feature-grid">
+    <section class="feature-card" id="modeling"><div class="feature-icon">▤</div><div><span class="section-kicker">FUTURE DEVELOPMENT</span><h2>Predictive modeling & monitoring priorities</h2><p>Future AI-based models will estimate mercury concentrations in unmonitored waterbodies and identify where additional sampling could help the most. The site will distinguish observed values from predictions and show uncertainty.</p><div class="feature-pills"><span>● Observed</span><span>◇ Predicted</span><span>⌁ Uncertainty</span><span>◎ Sampling priority</span></div><p class="feature-note">No trained model or model outputs are included in V2.</p></div></section>
+    <section class="feature-card" id="methods"><div class="feature-icon">∑</div><div><span class="section-kicker">SCIENTIFIC FOUNDATION</span><h2>Transparent methods</h2><p>The demo uses the EPA noncancer consumption-rate framework for methylmercury. When data arrive, measured tissue concentrations, official advisories, multiple contaminants, and validated geographic estimates must be considered before issuing any recommendation.</p><button type="button" class="text-link" data-dialog="method">View the equation and assumptions →</button></div></section>
+    <section class="feature-card" id="guidance"><div class="feature-icon">✚</div><div><span class="section-kicker">HEALTH & SAFETY</span><h2>Plain-language guidance</h2><p>People who are pregnant, planning pregnancy, breastfeeding, or feeding children need special attention. The first public release must explain portions, give warnings clearly, and never label unsampled fish as safe.</p><a class="text-link" href="https://www.alabamapublichealth.gov/tox/fish-advisories.html" target="_blank" rel="noopener noreferrer">Read the state's current advice ↗</a></div></section>
+  </div>
+  <section class="about-strip" id="about"><div><strong>Alabama Fish Advisory Decision Support</strong><p>Independent research demonstration. Not affiliated with or endorsed by the State of Alabama, FDA, or EPA.</p></div><div><span>Data: <b>not loaded</b></span><span>Model: <b>not trained</b></span><span>Advisories: <b>external link only</b></span></div></section>
+</div>
+</main>
+<footer><div>© 2026 Alabama Fish Advisory Decision Support · Research prototype</div><div><a href="#top">Back to top ↑</a><a href="https://www.alabamapublichealth.gov/tox/fish-advisories.html" target="_blank" rel="noopener noreferrer">Official Alabama advisories ↗</a></div></footer>
+<dialog id="infoDialog" aria-labelledby="dialogHeading"><div class="dialog-header"><h2 id="dialogHeading">Methods</h2><button type="button" id="dialogClose" aria-label="Close information">×</button></div><div id="dialogContent"></div></dialog>
 </body>
 </html>

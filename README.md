@@ -1,86 +1,84 @@
-# Alabama Fish Advisor — first working prototype
+# Alabama Fish Advisory Decision Support — Version 2
 
-**Status: demonstration only. This website is NOT a fish consumption advisory.**
+A **static, responsive research-prototype website** for exploring Alabama fishing locations and demonstrating the structure of a future personalized fish-consumption advisory tool. Designed to be published free on GitHub Pages.
 
-A mobile-friendly, four-step prototype that illustrates how anglers could select a fish species, select an Alabama catch location, enter personal information, and understand how a fish-consumption calculation works. The interface has light and dark themes; neither theme changes the scientific logic.
+**Important safety notice:** V2 does **not** contain real mercury measurements, trained prediction models, or imported Alabama official fish-advisory rules. No displayed number, colored region, or map marker may be used to decide whether to eat a fish. The example output is not an advisory. Users must consult current official Alabama guidance.
 
-## What works now
+## Changes from V1
 
-1. **Choose a fish:** eight illustrative fish types with SVG drawings and name search.
-2. **Choose where it was caught:** searchable list of twelve example Alabama waterbodies and an interactive Leaflet/OpenStreetMap map. Coordinates are approximate example centers, **not monitoring sites or advisory boundaries**. A fallback location list remains available if the map library cannot load.
-3. **Enter personal details:** age, body weight (lb or kg), optional sex, pregnancy / planning / breastfeeding status, and an illustrative raw-fish portion size.
-4. **See the example:** a hypothetical mercury-only calculation using an EPA noncancer framework, with a **made-up** contaminant concentration and a **made-up ±40% scenario range**. Neither a safe meal frequency nor an official risk category is inferred. The page directs users to the current official Alabama fish advisories.
+- Replaced the multi-step landing page with a scientific dark dashboard inspired by the selected V2 design reference.
+- Large Alabama map on the homepage and responsive catch checker beside it.
+- The catch-checking process remains visible as numbered species → location → personal profile → example result steps.
+- Clicking example markers (or selecting a location in the form) selects a place for the checker.
+- Map layer options: **Locations**, **Mercury preview** (imaginary concentrations and illustrative zones), **Monitoring preview** (imaginary future sampling zones). A clear status notice appears with each layer.
+- Map uses Leaflet and CARTO/OpenStreetMap tiles when the browser can reach them; otherwise, an included, interactive **stylized SVG Alabama backup map** allows location selection and layer preview without a basemap service. The backup drawing is not a regulatory boundary map.
+- Example result includes fish illustration, an EPA-based mathematical consumption calculation, and an entirely fictional illustrative scenario band. It does not claim measured confidence or show a recommendation to eat fish.
+- Dark is the default theme; a light mode is also available and can be removed later without changing the calculations.
+- A section reserved for future AI modeling of unmonitored waterbodies and monitoring priorities.
 
-The light/dark switch is in the header. Theme selection is saved locally in the visitor's browser; the personal inputs are **not saved or transmitted by this prototype**. There is no account, tracking script, backend, or database.
+## Files
 
-## Preview locally
+```text
+index.html           Website structure
+styles.css           Responsive dashboard/theme styling
+app.js               User interface, fish choices, sample locations, map layers
+core.js              Independent, testable EPA mathematical demonstration functions
+assets/favicon.svg   Project icon
+.nojekyll            Prevents GitHub Pages Jekyll processing
+data/example-schema.json  Documentation of future scientific-data structure; NOT loaded
+  tests/core.test.js Unit tests for the mathematical demonstration
+```
 
-Download/unzip the repository, then open `index.html` in a browser. The website's styles, fish drawings, inputs, and calculation are local. The interactive map requires internet access to Leaflet and OpenStreetMap tiles. If it cannot load, the location list and a simplified fallback map remain usable.
+## Run locally
 
-For a local web server, from this folder:
+The site contains only static HTML, CSS and JavaScript. Double-click `index.html`, or in PowerShell, from the project folder run:
 
-```bash
+```powershell
 python -m http.server 8000
 ```
 
-Then open `http://localhost:8000` in a browser.
+Then visit `http://localhost:8000/`.
 
-## Publish free with GitHub Pages
+An internet connection enables Leaflet and the CARTO basemap, but the fallback location map and calculator can still function without them.
 
-1. In GitHub, create a **new public repository** named `alabama-fish-advisory` under the `zavgleb90` account. This repository must be created before files can be uploaded; the current ChatGPT GitHub connector cannot create repositories.
-2. Upload `index.html`, `styles.css`, `app.js`, `.nojekyll`, `assets/`, `tests/`, and `README.md` directly to the repository's **main** branch, keeping folder names unchanged. You can use **Add file → Upload files** in GitHub.
-3. Go to **Settings → Pages → Build and deployment**. Under **Source**, choose **Deploy from a branch**. Choose **main** and **/(root)**, then save.
-4. Once GitHub finishes publishing, the expected address is `https://zavgleb90.github.io/alabama-fish-advisory/`.
+## Publish to GitHub Pages
 
-GitHub Pages on GitHub Free is sufficient for this static prototype. It does not run a Python backend or train predictive models when visitors load the site.
+Copy the files into the **root** of your `zavgleb90/alabama-fish-advisory` repository. From `D:\repos\alabama-fish-advisory`:
 
-## Repository files
-
-```text
-alabama-fish-advisory/
-├── index.html              # Pages, content, form, status labels
-├── styles.css              # V1 dark / V2 light + responsive layout
-├── app.js                  # UX, example locations, demo calculation
-├── assets/
-│   └── favicon.svg
-├── tests/
-│   └── core.test.js        # Fast arithmetic/validation checks with Node.js
-├── .nojekyll               # GitHub Pages compatibility
-└── README.md
+```powershell
+git add .
+git commit -m "V2 scientific dashboard and map layers"
+git push origin main
 ```
 
-Run calculator checks with `node tests/core.test.js`.
+If Pages is already configured to deploy from `main` and `/(root)`, the site updates after the push. Otherwise go to repository **Settings → Pages → Build and deployment → Deploy from a branch**, choose `main` and `/(root)`.
 
-## Scientific boundaries: read before releasing publicly
+Public URL (once Pages is enabled): `https://zavgleb90.github.io/alabama-fish-advisory/`
 
-- **Never** label a fish safe because its waterbody or species is missing from an advisory table. Alabama's 2026 guide explains that missing entries may reflect no sampling, insufficient data, or other gaps.
-- **Official advisories must take precedence** over statistical predictions. Any model-based meal count must not weaken a current official restriction.
-- Use accurate **species + site/segment matching**. A river name alone is not enough because advisory boundaries can differ along river reaches.
-- Check **other contaminants**, including PCBs and PFOS, not just mercury. Some contaminants require different risk models and assumptions.
-- Respect **sensitive population guidance** (children under 14, pregnant or nursing people, people planning pregnancy) in the current Alabama advisory.
-- The EPA equation shown here is the chronic **noncarcinogenic** consumption-rate framework only. It is *not* sufficient as a complete safety determination.
-- The example ±40% band is **not** a 95% confidence interval, validated model prediction, or real uncertainty estimate.
-- Alabama advisory meals are typically **8 oz raw fish**. The FDA/EPA national fish choice categories use a different **4 oz** adult reference serving. They should never be mixed without an explicit scientific decision.
-- Example child portions in `referencePortionOz` are instructional placeholders. A public release requires review by an environmental-health specialist to align meal sizes and restrictions with the applicable guidance.
-- We will need a documented protocol for updating official advisories and retiring stale predictions, plus external validation and user testing (especially with low-literacy users).
+## Test
 
-### Future data design (not implemented)
+```powershell
+node --test tests/core.test.js
+```
 
-Keep *observations*, *official advisories*, and *model estimates* distinct:
+We tested the forms, the offline SVG map with example colored layers, keyboard/mouse selection, demonstration calculation, theme switch, reset, and responsive viewport. We could not verify online basemap tile loading in this restricted test environment; verify the map on your published GitHub Pages website.
 
-- `data/measurements.csv`: sample ID, species, date, spatial location, waterbody segment, analyte, wet-weight concentration, units, detection limit, QA/QC source.
-- `data/official_advisories.json`: source URL/document, effective date, waterbody boundary/river reach, species, contaminant, population, meal restriction, update history.
-- `data/predictions.json`: model version, estimated level, validated uncertainty interval, spatial coverage, applicability limitations, quality metrics.
-- `risk-engine/`: separately validated EPA calculations, regulatory priority rules, and reproducible tests.
+## Scientific precautions
 
-Do not add actual consumption advice to this prototype until these checks are passed and the recommendation wording has been professionally reviewed.
+1. **Official state restrictions must take precedence.** Their true spatial coverage, species lists, timing, and population groups must be checked, not inferred from map markers.
+2. Do not equate **no advisory found**, **no sample**, or **low modeled concentration** with proven safety.
+3. Do not mix different portion standards. Alabama's advisory reference meal is eight ounces raw fish for adults; the FDA/EPA national fish chart uses a different four-ounce adult reference serving for certain groups. Child portions and special-population safeguards require expert review.
+4. The methylmercury RfD in the mathematical example is 0.1 µg/kg/day. The core conversion is `RfD × body weight ÷ concentration` (g/day), then converted into theoretical raw-fish portions/month. The 40% imaginary example band is **not** a 95% prediction interval or an uncertainty method endorsed by EPA.
+5. Other contaminants, multi-species diets, fish preparation, cancer endpoints, and individual exposure conditions require separate scientific treatment.
+6. A future model requires validation before any prediction can contribute to advice. Distinguish measured vs. predicted vs. unknown values. For priority mapping, disclose that a high-uncertainty region can be a sampling priority without necessarily being a high-risk location.
+7. Do not store a visitor's weight, age, or pregnancy information unless a privacy review determines it is necessary. V2 processes inputs only in browser memory.
 
-## Sources
+### References to verify before launch
 
-- [Alabama Department of Public Health: official fish advisories](https://www.alabamapublichealth.gov/tox/fish-advisories.html)
-- [Alabama Fish Consumption Advisories 2026 (PDF)](https://www.alabamapublichealth.gov/tox/assets/2026_fishadvisory.pdf)
-- [EPA fish advisory technical guidance](https://www.epa.gov/choose-fish-and-shellfish-wisely/support-fish-and-shellfish-advisory-programs)
-- [FDA/EPA technical information on fish advice](https://www.fda.gov/food/environmental-contaminants-food/technical-information-development-fdaepa-advice-about-eating-fish-those-who-might-become-or-are)
-- [Leaflet maps](https://leafletjs.com/) and [OpenStreetMap tile usage policy](https://operations.osmfoundation.org/policies/tiles/)
+- U.S. EPA, *Guidance for Assessing Chemical Contaminant Data for Use in Fish Advisories*, Volume 2: Risk Assessment and Fish Consumption Limits, Third Edition (2000).
+- FDA/EPA, *Technical Information on Development of FDA/EPA Advice about Eating Fish* (online technical basis; referenced user PDF dated June 2024).
+- Alabama Department of Public Health, current fish advisories: https://www.alabamapublichealth.gov/tox/fish-advisories.html
 
-Independent research prototype. Not affiliated with or endorsed by the Alabama Department of Public Health or the EPA.
+## Proposed steps for real data
+
+Data ingestion → waterbody/species matching → measured values and uncertainty → harmonized state advisories → validated predictions with calibration → monitoring priority model → independent environmental-health review → public release. `data/example-schema.json` is only a starting documentation sketch, not a ready-to-run importer.

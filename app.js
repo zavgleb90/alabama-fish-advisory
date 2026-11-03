@@ -1,309 +1,221 @@
-/* Alabama Fish Advisor — research demonstration.
- * No real contaminant observations, predictive model outputs, or verified local
- * advisory rules are bundled with this application. Never treat scenario
- * calculations as fish consumption advice.
- */
-(function (root) {
-  'use strict';
-
-  const Core = Object.freeze({
-    METHYLMERCURY_RFD_UG_KG_DAY: 0.1,
-    GRAMS_PER_OUNCE: 28.349523125,
-    DAYS_PER_MONTH: 365.25 / 12,
-    demoOnly: true,
-    availableAdvisoryRecords: 0,
-    availableMeasurementRecords: 0,
-    /** EPA noncancer framework: RfD (µg/kg/day) * body weight (kg) / concentration (µg/g).
-     * Returns hypothetical grams of raw fish per day. */
-    consumptionLimitGramsDay: function (weightKg, contaminantUgG, rfd = 0.1) {
-      if (![weightKg, contaminantUgG, rfd].every(Number.isFinite) || weightKg <= 0 || contaminantUgG <= 0 || rfd <= 0) {
-        throw new RangeError('Weight, concentration, and RfD must be positive finite values');
-      }
-      return (rfd * weightKg) / contaminantUgG;
-    },
-    /** Returns a theoretical number of fish portions/month, NOT a safety recommendation. */
-    hypotheticalMealsMonth: function (weightKg, contaminantUgG, portionOz, rfd = 0.1) {
-      if (!Number.isFinite(portionOz) || portionOz <= 0) throw new RangeError('Portion must be positive');
-      return Core.consumptionLimitGramsDay(weightKg, contaminantUgG, rfd) * Core.DAYS_PER_MONTH / (portionOz * Core.GRAMS_PER_OUNCE);
-    },
-    referencePortionOz: function (age) {
-      if (!Number.isInteger(age) || age < 1 || age > 120) throw new RangeError('Age must be 1–120 years');
-      // These are illustrative age-specific raw-fish portions. They are NOT
-      // Alabama's official child serving standard; real advice must be reviewed.
-      if (age <= 3) return 1;
-      if (age <= 7) return 2;
-      if (age <= 10) return 3;
-      if (age <= 13) return 4;
-      return 8; // Alabama's adult reference advisory meal (raw weight).
-    },
-    kgFrom: function (weight, unit) {
-      if (!Number.isFinite(weight) || weight <= 0 || (unit !== 'lb' && unit !== 'kg')) throw new RangeError('Invalid weight or unit');
-      return unit === 'kg' ? weight : weight / 2.2046226218;
-    },
-    exampleRange: function (center) {
-      if (!Number.isFinite(center) || center <= 0) throw new RangeError('Invalid example concentration');
-      return { low: center * 0.6, center: center, high: center * 1.4 };
-    }
+/* V2 scientific-dashboard UI. No real mercury samples, advisories, or model predictions are bundled. */
+(function(root){
+'use strict';
+const Core=root.FishAdvisorCore;
+const $=id=>document.getElementById(id);
+const FISH=[
+{id:'bass',name:'Largemouth Bass',body:'#79994a',top:'#49693f',fin:'#597b42'},
+{id:'catfish',name:'Channel Catfish',body:'#8ca3ad',top:'#516c7c',fin:'#557185',whiskers:true},
+{id:'crappie',name:'Crappie',body:'#acb8a5',top:'#607466',fin:'#7b9888',spots:true},
+{id:'bluegill',name:'Bluegill',body:'#cba661',top:'#47798c',fin:'#ae733f',round:true},
+{id:'striped',name:'Striped Bass',body:'#afc3c0',top:'#496e7b',fin:'#628491',stripes:true},
+{id:'flathead',name:'Flathead Catfish',body:'#a0a06b',top:'#6d7951',fin:'#657a48',whiskers:true},
+{id:'redbreast',name:'Redbreast Sunfish',body:'#c98256',top:'#55896f',fin:'#b5664c',round:true},
+{id:'white',name:'White Bass',body:'#b4c4c2',top:'#66969a',fin:'#73938c',stripes:true}
+];
+const LOCATIONS=[
+{id:'martin',name:'Lake Martin',type:'Lake · Tallapoosa River Basin',lat:32.75,lon:-85.91,demo:0.32},
+{id:'guntersville',name:'Guntersville Lake',type:'Lake · Tennessee River',lat:34.41,lon:-86.27,demo:0.12},
+{id:'logan-martin',name:'Logan Martin Lake',type:'Lake · Coosa River',lat:33.47,lon:-86.31,demo:0.21},
+{id:'smith',name:'Lewis Smith Lake',type:'Lake · North Alabama',lat:34.06,lon:-87.05,demo:0.44},
+{id:'weiss',name:'Weiss Lake',type:'Lake · Coosa River',lat:34.13,lon:-85.64,demo:0.17},
+{id:'lay',name:'Lay Lake',type:'Lake · Coosa River',lat:33.05,lon:-86.50,demo:0.27},
+{id:'pickwick',name:'Pickwick Lake',type:'Lake · Tennessee River',lat:34.91,lon:-88.04,demo:0.09},
+{id:'eufaula',name:'Lake Eufaula',type:'Lake · Chattahoochee River',lat:31.91,lon:-85.15,demo:0.49},
+{id:'black-warrior',name:'Black Warrior River (Tuscaloosa)',type:'River · example point',lat:33.19,lon:-87.57,demo:0.38},
+{id:'mobile-tensaw',name:'Mobile–Tensaw Delta',type:'River delta · example point',lat:30.84,lon:-87.91,demo:0.18},
+{id:'tallapoosa',name:'Tallapoosa River (Tallassee)',type:'River · example point',lat:32.54,lon:-85.89,demo:0.31},
+{id:'coosa',name:'Coosa River (Wetumpka)',type:'River · example point',lat:32.54,lon:-86.21,demo:0.22}
+];
+// Fictitious geographic shapes represent neither hydrologic catchments nor legal advisory regions.
+const DEMO_REGIONS=[
+{name:'Northwest demo zone',value:0.09,coords:[[35,-88.47],[35,-87.08],[34.04,-87.08],[33.94,-88.47]]},
+{name:'Northeast demo zone',value:0.17,coords:[[35,-87.08],[35,-85.62],[34.42,-85.62],[34.1,-86.01],[34.04,-87.08]]},
+{name:'Central-west demo zone',value:0.38,coords:[[34.04,-88.47],[34.04,-87.08],[33.15,-87.08],[32.77,-88.47]]},
+{name:'Central-east demo zone',value:0.32,coords:[[34.04,-87.08],[34.1,-86.01],[34.42,-85.62],[33.38,-85.0],[32.6,-85.15],[32.77,-87.08]]},
+{name:'Southern-west demo zone',value:0.18,coords:[[32.77,-88.47],[33.15,-87.08],[32.77,-87.08],[32.0,-86.9],[31.0,-87.3],[30.4,-87.9],[30.35,-88.03],[31.0,-88.47]]},
+{name:'Southern-east demo zone',value:0.49,coords:[[32.77,-87.08],[32.6,-85.15],[31.0,-85.0],[31,-87.3],[32,-86.9]]}
+];
+const state={map:null,markers:new Map(),regionGroup:null,priorityGroup:null,layer:'coverage',locationId:'',fishId:'',person:null,theme:'dark'};
+const locate=id=>LOCATIONS.find(x=>x.id===id);
+const fish=id=>FISH.find(x=>x.id===id);
+const fmt=(v,d=2)=>Number(v).toFixed(d).replace(/\.00$/,'');
+function fishArt(f){
+ const x=f.round?'M50 46C64 13 106 10 134 40C146 52 145 73 130 86C100 113 62 97 50 67Z':'M24 59C46 28 98 27 133 50L167 29L163 58L170 87L132 68C100 94 52 86 24 59Z';
+ const marks=f.spots?'<g fill="#314c42" opacity=".74"><circle cx="74" cy="42" r="4"/><circle cx="95" cy="54" r="5"/><circle cx="110" cy="44" r="4"/><circle cx="91" cy="72" r="3"/><circle cx="58" cy="60" r="3"/></g>':f.stripes?'<path d="M68 43Q103 54 129 52M68 55Q102 67 128 63M70 65Q101 79 128 71" stroke="#375b65" stroke-width="3" fill="none" opacity=".75"/>':'<path d="M64 54Q95 44 129 56" fill="none" stroke="#305f40" stroke-width="4" opacity=".75"/>';
+ return `<svg viewBox="0 0 180 115" role="presentation" xmlns="http://www.w3.org/2000/svg"><path d="M70 42L86 19L106 37M84 80L106 103L123 77" fill="${f.fin}"/><path d="${x}" fill="${f.body}" stroke="${f.top}" stroke-width="3"/><path d="M42 50Q53 45 67 60Q56 74 42 67" fill="#e8e9d3" opacity=".72"/><path d="M70 80L89 98L97 81" fill="${f.fin}" stroke="${f.top}" stroke-width="2"/>${marks}<circle cx="46" cy="53" r="5.2" fill="#203a39"/><circle cx="44.5" cy="51" r="1.8" fill="white"/><path d="M27 67Q35 69 45 67" stroke="${f.top}" stroke-width="2" fill="none"/>${f.whiskers?'<path d="M39 64Q2 56 9 78M39 70Q5 85 17 100M40 59Q14 43 7 35" stroke="#526676" stroke-width="2" fill="none"/>':''}</svg>`;
+}
+function seedForm(){
+ for(const f of FISH){const o=document.createElement('option');o.value=f.id;o.textContent=f.name;$('species').append(o)}
+ for(const l of LOCATIONS){const o=document.createElement('option');o.value=l.id;o.textContent=l.name;$('location').append(o)}
+ $('mapLocationCount').textContent=LOCATIONS.length;
+}
+function setLocation(id,fromMap=false){
+ if(!locate(id))return;
+ state.locationId=id;
+ $('location').value=id;
+ $('selectedMapText').textContent=locate(id).name;
+ for(const [mid,m] of state.markers)m.setStyle({radius:mid===id?11:6,weight:mid===id?3:1.8,color:mid===id?'#ffffff':'#073342'});
+ if(state.map && !fromMap){const loc=locate(id);state.map.flyTo([loc.lat,loc.lon],Math.max(8,state.map.getZoom()),{duration:.4})}
+ if(!state.map)drawFallbackMap();
+}
+function demoColor(n){return n<.15?'#31a87b':n<.25?'#e0c34e':n<.4?'#f5a136':'#f37565'}
+function setLegend(layer){
+ const body=$('legendBody'),note=$('legendNote');
+ if(layer==='coverage'){
+ $('legendTitle').textContent='Map key';body.innerHTML='<div><i class="legend-mark cyan"></i> Example fishing location</div><div><i class="legend-mark hollow"></i> No verified advisory data</div>';
+ note.textContent='Markers are approximate, not sampling sites or advisory boundaries.';
+ $('mapStatus').textContent='NO VERIFIED DATA LOADED';
+ }else if(layer==='demo-mercury'){
+ $('legendTitle').textContent='Fictional mercury values';body.innerHTML='<div><i class="legend-mark low"></i> Imaginary value < 0.15 µg/g</div><div><i class="legend-mark med"></i> 0.15–0.24 µg/g</div><div><i class="legend-mark high"></i> 0.25–0.39 µg/g</div><div><i class="legend-mark max"></i> ≥ 0.40 µg/g</div>';
+ note.innerHTML='<span class="preview-label">SIMULATED ONLY.</span> Numbers, regions and categories are arbitrary; colors are NOT safety classes.';
+ $('mapStatus').textContent='SIMULATED VALUES · NOT OBSERVED';
+ }else{
+ $('legendTitle').textContent='Fictional monitoring priorities';body.innerHTML='<div><i class="legend-mark purple"></i> Illustrative future sampling target</div><div><i class="legend-mark cyan"></i> Example fishing location</div>';
+ note.innerHTML='<span class="preview-label">ILLUSTRATION ONLY.</span> No monitoring priority model has been trained.';
+ $('mapStatus').textContent='MONITORING PREVIEW · NOT MODELED';
+ }
+}
+function setMapLayer(layer){
+ if(!['coverage','demo-mercury','priority'].includes(layer))return;
+ state.layer=layer;
+ document.querySelectorAll('[data-layer]').forEach(b=>{const on=b.dataset.layer===layer;b.classList.toggle('selected',on);b.setAttribute('aria-pressed',String(on))});
+ setLegend(layer);
+ if(!state.map||!root.L){drawFallbackMap();return;}
+ if(state.regionGroup)state.map.removeLayer(state.regionGroup);
+ if(state.priorityGroup)state.map.removeLayer(state.priorityGroup);
+ if(layer==='demo-mercury'){
+  state.regionGroup=root.L.layerGroup(DEMO_REGIONS.map(r=>root.L.polygon(r.coords,{color:demoColor(r.value),fillColor:demoColor(r.value),fillOpacity:.29,weight:2,opacity:.65,interactive:false}))).addTo(state.map);
+ }
+ if(layer==='priority'){
+  state.priorityGroup=root.L.layerGroup([
+   [33.6,-87.22],[32.1,-86.7],[31.8,-87.25],[34.75,-86.8],[32.3,-85.7]
+  ].map(pos=>root.L.circle(pos,{radius:22000,color:'#aa9bff',weight:2,fillColor:'#7364c7',fillOpacity:.22,interactive:false}))).addTo(state.map);
+ }
+ for(const loc of LOCATIONS){const m=state.markers.get(loc.id);if(!m)continue;m.setStyle({fillColor:layer==='demo-mercury'?demoColor(loc.demo):'#30c9e9',fillOpacity:.95})}
+}
+function drawFallbackMap(){
+  // SVG map retains functional location selection when external basemap/Leaflet scripts are unavailable.
+  // Its state outline and waterways are stylized (NOT geospatial regulatory boundaries).
+  const el=$('mapFallback');el.hidden=false;el.classList.add('svg-map-fallback');
+  const px=lon=>Math.round(70+(lon+88.55)/3.7*510);
+  const py=lat=>Math.round(34+(35.15-lat)/5.1*640);
+  const bounds=[[-88.45,35],[-85.62,35],[-85.5,34.55],[-85.17,34.14],[-85.1,33.6],[-85.05,32.6],[-85.0,31.0],[-87.6,31.0],[-87.6,30.43],[-87.88,30.33],[-88.08,30.22],[-88.39,30.28],[-88.47,31.0]];
+  const boundPath=bounds.map((p,i)=>`${i?'L':'M'}${px(p[0])},${py(p[1])}`).join(' ')+'Z';
+  const rivers=[
+    [[-88.4,34.72],[-87.8,34.62],[-87.2,34.64],[-86.7,34.53],[-86.1,34.44],[-85.6,34.5]],
+    [[-85.8,34.76],[-85.9,34.22],[-86.3,33.77],[-86.4,33.36],[-86.5,32.9],[-86.25,32.48],[-86.5,32.14],[-86.9,31.7],[-87.5,31.25],[-87.85,30.67]],
+    [[-85.18,33.75],[-85.53,33.37],[-85.86,32.94],[-85.83,32.56],[-86.3,32.34],[-86.7,32.15]],
+    [[-87.43,34.15],[-87.7,33.76],[-87.62,33.37],[-87.85,33.0],[-87.8,32.43],[-87.9,31.84],[-87.95,31.2],[-87.87,30.66]],
+    [[-87.8,32.45],[-87.28,32.4],[-86.86,32.22],[-86.68,31.9]]
+  ];
+  const riverSvg=rivers.map(r=>`<path d="${r.map((p,i)=>`${i?'L':'M'}${px(p[0])} ${py(p[1])}`).join(' ')}"/>`).join('');
+  const regionSvg=state.layer==='demo-mercury'?DEMO_REGIONS.map(r=>{
+    const pts=r.coords.map(x=>`${px(x[1])},${py(x[0])}`).join(' ');
+    return `<polygon points="${pts}" fill="${demoColor(r.value)}" fill-opacity=".32" stroke="${demoColor(r.value)}" stroke-width="2"/>`;
+  }).join(''):'';
+  const prioritySvg=state.layer==='priority'?[[33.6,-87.22],[32.1,-86.7],[31.8,-87.25],[34.75,-86.8],[32.3,-85.7]].map(v=>`<circle cx="${px(v[1])}" cy="${py(v[0])}" r="36" fill="#8376eb" fill-opacity=".25" stroke="#b1a6ff" stroke-width="2" stroke-dasharray="5 5"/>`).join(''):'';
+  const towns=[['Huntsville',34.73,-86.59],['Birmingham',33.52,-86.8],['Tuscaloosa',33.21,-87.57],['Montgomery',32.38,-86.30],['Mobile',30.70,-88.04]];
+  const townSvg=towns.map(t=>`<g class="city"><circle cx="${px(t[2])}" cy="${py(t[1])}" r="3" fill="#e6f1f9"/><text x="${px(t[2])+7}" y="${py(t[1])-7}">${t[0]}</text></g>`).join('');
+  const locationsSvg=LOCATIONS.map(l=>{
+    const x=px(l.lon),y=py(l.lat),color=state.layer==='demo-mercury'?demoColor(l.demo):'#3bdeee';
+    const selected=state.locationId===l.id;
+    return `<g class="fallback-point" data-place="${l.id}" tabindex="0" role="button" aria-label="Select ${l.name}" style="cursor:pointer"><circle cx="${x}" cy="${y}" r="${selected?14:10}" fill="#061b2b" stroke="${selected?'white':'#c0faff'}" stroke-width="2"/><circle cx="${x}" cy="${y}" r="${selected?10:6}" fill="${color}"/><title>${l.name} — example location, not monitoring data</title></g>`;
+  }).join('');
+  el.innerHTML=`<svg viewBox="0 0 680 735" role="img" aria-label="Stylized Alabama map with clickable illustrative fishing locations"><defs><linearGradient id="fbBG" x2="1" y2="1"><stop stop-color="#081b30"/><stop offset="1" stop-color="#0a314b"/></linearGradient><clipPath id="alabamaClip"><path d="${boundPath}"/></clipPath><pattern id="gridlines" width="45" height="45" patternUnits="userSpaceOnUse"><path d="M 45 0 L 0 0 0 45" stroke="#8cd7f7" stroke-opacity=".07" stroke-width="1" fill="none"/></pattern></defs><rect width="680" height="735" fill="url(#fbBG)"/><rect width="680" height="735" fill="url(#gridlines)"/><path d="${boundPath}" fill="#0e3a52" stroke="#77d9ef" stroke-width="3"/><g clip-path="url(#alabamaClip)"><path d="${boundPath}" fill="#0f2c42"/><g class="fallback-rivers" fill="none" stroke="#36b5ec" stroke-opacity=".58" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">${riverSvg}</g><g>${regionSvg}${prioritySvg}</g></g><path d="${boundPath}" fill="none" stroke="#8feaff" stroke-width="3"/><g>${townSvg}</g><g fill="#80b1ca" opacity=".26" text-anchor="middle"><text x="334" y="382" font-family="Inter,Arial" font-size="47" font-weight="800" letter-spacing="10">ALABAMA</text></g>${locationsSvg}<g fill="#bfdbea" opacity=".7" font-family="Inter,Arial" font-size="11"><text x="30" y="712">APPROXIMATE ILLUSTRATION • NOT ADVISORY BOUNDARIES</text></g></svg>`;
+  el.querySelectorAll('.fallback-point').forEach(g=>{
+    const handler=()=>{setLocation(g.dataset.place,true);drawFallbackMap()};
+    g.addEventListener('click',handler);
+    g.addEventListener('keydown',e=>{if(['Enter',' '].includes(e.key)){e.preventDefault();handler()}});
   });
+}
 
-  if (typeof module !== 'undefined' && module.exports) module.exports = Core;
-  root.FishAdvisorCore = Core;
-  if (typeof document === 'undefined') return;
-
-  const FISH = [
-    { id: 'bass', name: 'Largemouth Bass', alt: 'Stylized green largemouth bass', body: '#779a4b', top: '#516e42', fin: '#4c7147' },
-    { id: 'catfish', name: 'Channel Catfish', alt: 'Stylized blue-gray channel catfish', body: '#7893a6', top: '#436779', fin: '#52718a', whiskers: true },
-    { id: 'crappie', name: 'Crappie', alt: 'Stylized speckled crappie', body: '#a6b5a4', top: '#667c6c', fin: '#718e77', spots: true },
-    { id: 'bluegill', name: 'Bluegill', alt: 'Stylized bluegill sunfish', body: '#d2ab63', top: '#4c8390', fin: '#a87a3f', round: true },
-    { id: 'striped-bass', name: 'Striped Bass', alt: 'Stylized striped bass', body: '#a7afb2', top: '#536b78', fin: '#687f88', stripes: true },
-    { id: 'flathead', name: 'Flathead Catfish', alt: 'Stylized flathead catfish', body: '#96965f', top: '#697348', fin: '#64713e', whiskers: true },
-    { id: 'redbreast', name: 'Redbreast Sunfish', alt: 'Stylized redbreast sunfish', body: '#bb8450', top: '#4e8571', fin: '#a56048', round: true },
-    { id: 'white-bass', name: 'White Bass', alt: 'Stylized pale silver bass', body: '#b1c6bf', top: '#6e999b', fin: '#78958c', stripes: true }
-  ];
-  // These are approximate map centers used to demonstrate navigation, not
-  // monitoring points or regulatory advisory boundaries.
-  const LOCATIONS = [
-    { id: 'martin', name: 'Lake Martin', type: 'Lake / reservoir', lat: 32.75, lon: -85.91 },
-    { id: 'guntersville', name: 'Guntersville Lake', type: 'Lake / Tennessee River', lat: 34.41, lon: -86.27 },
-    { id: 'logan-martin', name: 'Logan Martin Lake', type: 'Lake / Coosa River', lat: 33.47, lon: -86.31 },
-    { id: 'smith', name: 'Lewis Smith Lake', type: 'Lake / reservoir', lat: 34.06, lon: -87.05 },
-    { id: 'weiss', name: 'Weiss Lake', type: 'Lake / Coosa River', lat: 34.13, lon: -85.64 },
-    { id: 'lay', name: 'Lay Lake', type: 'Lake / Coosa River', lat: 33.05, lon: -86.50 },
-    { id: 'pickwick', name: 'Pickwick Lake', type: 'Lake / Tennessee River', lat: 34.91, lon: -88.04 },
-    { id: 'eufaula', name: 'Lake Eufaula', type: 'Lake / Chattahoochee River', lat: 31.91, lon: -85.15 },
-    { id: 'black-warrior', name: 'Black Warrior River (Tuscaloosa)', type: 'River / approximate point', lat: 33.19, lon: -87.57 },
-    { id: 'mobile-tensaw', name: 'Mobile–Tensaw Delta', type: 'River delta / approximate point', lat: 30.84, lon: -87.91 },
-    { id: 'tallapoosa', name: 'Tallapoosa River (near Tallassee)', type: 'River / approximate point', lat: 32.54, lon: -85.89 },
-    { id: 'coosa', name: 'Coosa River (near Wetumpka)', type: 'River / approximate point', lat: 32.54, lon: -86.21 }
-  ];
-  const $ = (id) => document.getElementById(id);
-  const state = { fish: null, location: null, person: null, step: 1, maxStep: 1, demoConcentration: 0.25, map: null, markers: new Map() };
-  const officialUrl = 'https://www.alabamapublichealth.gov/tox/fish-advisories.html';
-  const safeNum = (n, digits = 1) => Number(n).toFixed(digits).replace(/\.0$/, '');
-
-  function fishArt(fish) {
-    const x = fish.round ? 'M50 46C64 13 106 10 134 40C146 52 145 73 130 86C100 113 62 97 50 67Z' : 'M24 59C46 28 98 27 133 50L167 29L163 58L170 87L132 68C100 94 52 86 24 59Z';
-    const markings = fish.spots ? '<g fill="#344d40" opacity=".7"><circle cx="77" cy="42" r="4"/><circle cx="95" cy="58" r="5"/><circle cx="112" cy="44" r="3"/><circle cx="88" cy="72" r="3"/><circle cx="61" cy="63" r="3"/><circle cx="109" cy="70" r="4"/></g>' : (fish.stripes ? '<path d="M65 45C89 54 109 54 128 53M65 54C91 65 107 64 128 62M65 62C87 76 109 75 124 69" fill="none" stroke="#45626a" stroke-width="3" opacity=".75"/>' : '<path d="M63 56Q98 47 128 58" fill="none" stroke="#3c624c" stroke-width="4" opacity=".7"/>');
-    const whiskers = fish.whiskers ? '<path d="M40 66Q5 59 5 75M41 70Q7 84 14 97M40 62Q8 44 3 38" fill="none" stroke="#536776" stroke-width="2"/>' : '';
-    return `<svg viewBox="0 0 180 115" role="img" aria-label="${fish.alt}" xmlns="http://www.w3.org/2000/svg"><path d="M68 44L84 20L105 37M87 77L108 102L120 77" fill="${fish.fin}" opacity=".92"/><path d="${x}" fill="${fish.body}" stroke="${fish.top}" stroke-width="3" stroke-linejoin="round"/><path d="M41 52Q54 49 64 60Q54 71 41 65" fill="#f2edce" opacity=".8"/><path d="M72 80L91 98L97 79" fill="${fish.fin}" stroke="${fish.top}" stroke-width="2"/><path d="M44 53Q34 53 27 48M43 65Q34 68 26 68" fill="none" stroke="${fish.top}" stroke-width="2"/>${markings}${whiskers}<circle cx="45" cy="52" r="5" fill="#263c3b"/><circle cx="44" cy="50" r="1.7" fill="#fff"/><path d="M27 66Q39 67 46 67" fill="none" stroke="${fish.top}" stroke-width="2"/><path d="M59 80Q75 92 90 83" fill="none" stroke="${fish.top}" stroke-width="2" opacity=".65"/></svg>`;
+function initMap(){
+ setLegend('coverage');
+ if(!root.L){drawFallbackMap();return}
+ try{
+  const map=root.L.map('map',{zoomControl:true,scrollWheelZoom:false,minZoom:5,maxZoom:14,preferCanvas:true});
+  state.map=map;map.setView([32.7,-86.8],7);
+  const base=state.theme==='dark'?'dark_all':'light_all';
+  root.L.tileLayer(`https://{s}.basemaps.cartocdn.com/${base}/{z}/{x}/{y}{r}.png`,{subdomains:'abcd',maxZoom:19,attribution:'&copy; OpenStreetMap contributors &copy; CARTO'}).addTo(map);
+  for(const loc of LOCATIONS){
+   const m=root.L.circleMarker([loc.lat,loc.lon],{radius:6,color:'#073342',weight:1.8,fillColor:'#30c9e9',fillOpacity:.95}).addTo(map);
+   m.bindTooltip(loc.name,{direction:'top'});
+   m.on('click',()=>{setLocation(loc.id,true);$('location').focus({preventScroll:true})});
+   state.markers.set(loc.id,m);
   }
-
-  function renderFishes() {
-    const query = $('fishSearch').value.trim().toLowerCase();
-    const matches = FISH.filter(f => f.name.toLowerCase().includes(query));
-    const grid = $('fishGrid');
-    grid.replaceChildren();
-    for (const f of matches) {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'fish-choice' + (state.fish?.id === f.id ? ' selected' : '');
-      button.setAttribute('aria-pressed', state.fish?.id === f.id ? 'true' : 'false');
-      button.innerHTML = `<span class="fish-choice-art">${fishArt(f)}</span><span class="fish-choice-label"><span>${f.name}</span><span aria-hidden="true">${state.fish?.id === f.id ? '✓' : '›'}</span></span>`;
-      button.addEventListener('click', () => {
-        state.fish = f;
-        $('fishSelected').textContent = f.name;
-        $('to2').disabled = false;
-        state.maxStep = Math.max(state.maxStep, 2);
-        renderFishes();
-        updateStepper();
-      });
-      grid.append(button);
-    }
-    if (!matches.length) {
-      const empty = document.createElement('p'); empty.className = 'empty-state';
-      empty.textContent = 'No fish match. Try a different name.';
-      grid.append(empty);
-    }
-  }
-  function renderLocations() {
-    const query = $('locationSearch').value.trim().toLowerCase();
-    const list = $('locationList');
-    list.replaceChildren();
-    for (const loc of LOCATIONS.filter(l => (l.name + ' ' + l.type).toLowerCase().includes(query))) {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'location-choice' + (state.location?.id === loc.id ? ' selected' : '');
-      button.setAttribute('aria-pressed', state.location?.id === loc.id ? 'true' : 'false');
-      button.innerHTML = `<span class="pin" aria-hidden="true">⌖</span><span><span class="location-name">${loc.name}</span><span class="location-type">${loc.type}</span></span><span class="location-tick" aria-hidden="true">${state.location?.id === loc.id ? '✓' : '›'}</span>`;
-      button.addEventListener('click', () => selectLocation(loc));
-      list.append(button);
-    }
-    if (!list.childElementCount) {
-      const empty = document.createElement('p'); empty.className = 'empty-state';
-      empty.textContent = 'No matches. Pick a different place.';
-      list.append(empty);
-    }
-  }
-  function selectLocation(loc, pan = true) {
-    state.location = loc;
-    $('locationSelected').textContent = loc.name;
-    $('to3').disabled = false;
-    state.maxStep = Math.max(state.maxStep, 3);
-    renderLocations();
-    updateStepper();
-    if (pan && state.map) {
-      state.map.flyTo([loc.lat, loc.lon], Math.max(8, state.map.getZoom()), { duration: 0.6 });
-      state.markers.get(loc.id)?.openPopup();
-    }
-  }
-  function initMap() {
-    if (state.map) { setTimeout(() => state.map.invalidateSize(), 50); return; }
-    if (typeof root.L === 'undefined') { $('alabamaMap').hidden = true; $('mapFallback').hidden = false; return; }
-    try {
-      const map = root.L.map('alabamaMap', { zoomControl: true, scrollWheelZoom: false, minZoom: 6, maxZoom: 15 });
-      map.setView([32.75, -86.72], 7);
-      root.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>',
-        maxZoom: 19
-      }).addTo(map);
-      for (const loc of LOCATIONS) {
-        const marker = root.L.circleMarker([loc.lat, loc.lon], { radius: 7, color: '#083b5e', weight: 2, fillColor: '#38d2d9', fillOpacity: .95 }).addTo(map);
-        marker.bindPopup(`<strong>${loc.name}</strong><br><small>Example location · Not an advisory boundary</small>`);
-        marker.on('click', () => selectLocation(loc, false));
-        state.markers.set(loc.id, marker);
-      }
-      map.on('tileerror', () => { /* Map remains usable via its location list if tiles fail. */ });
-      state.map = map;
-      setTimeout(() => map.invalidateSize(), 80);
-    } catch (_err) { $('alabamaMap').hidden = true; $('mapFallback').hidden = false; }
-  }
-  function updateStepper() {
-    document.querySelectorAll('.step-button').forEach(b => {
-      const n = Number(b.dataset.step);
-      b.classList.toggle('active', n === state.step);
-      b.classList.toggle('complete', n < state.step);
-      b.disabled = n > state.maxStep;
-      b.setAttribute('aria-current', n === state.step ? 'step' : 'false');
-    });
-  }
-  function showStep(n) {
-    if (n > state.maxStep || n < 1 || n > 4) return;
-    state.step = n;
-    for (let i = 1; i <= 4; i++) $('step' + i).hidden = n !== i;
-    updateStepper();
-    if (n === 2) initMap();
-    document.querySelector('.workspace-head').scrollIntoView({ block: 'start', behavior: 'smooth' });
-  }
-  function readPerson() {
-    const age = Number($('age').value);
-    const weight = Number($('weight').value);
-    const unit = $('weightUnit').value;
-    if (!Number.isInteger(age) || age < 1 || age > 120 || $('age').value.trim() === '') throw new Error('Please enter an age between 1 and 120.');
-    if ($('weight').value.trim() === '' || !Number.isFinite(weight) || weight <= 0 || (unit === 'lb' ? weight > 650 : weight > 295)) throw new Error('Please enter a valid body weight.');
-    const weightKg = Core.kgFrom(weight, unit);
-    if (weightKg < 4 || weightKg > 295) throw new Error('Weight is outside the range supported by this demonstration.');
-    const mealValue = $('mealSize').value;
-    const portionOz = mealValue === 'auto' ? Core.referencePortionOz(age) : Number(mealValue);
-    return { age, weight, unit, weightKg, sex: $('profileSex').value, lifeStage: $('lifeStage').value, portionOz };
-  }
-  function renderResult() {
-    const p = state.person;
-    if (!p || !state.fish || !state.location) return;
-    const band = Core.exampleRange(state.demoConcentration);
-    // Using the high (hypothetical) scenario is a display choice, not a
-    // validated way to incorporate uncertainty in a real public advisory.
-    const theoretical = Core.hypotheticalMealsMonth(p.weightKg, band.high, p.portionOz);
-    $('resultFish').textContent = state.fish.name;
-    $('resultLocation').textContent = state.location.name + ' · Alabama (illustrative place)';
-    const stageName = { general:'general population', pregnant:'pregnant', planning:'planning pregnancy', breastfeeding:'breastfeeding' }[p.lifeStage];
-    $('resultPerson').textContent = `Age ${p.age} · ${safeNum(p.weight)} ${p.unit} · ${stageName}`;
-    $('resultNumber').textContent = theoretical.toFixed(1);
-    $('resultUnit').textContent = 'theoretical meals / month';
-    $('resultServing').textContent = `${safeNum(p.portionOz)} oz of raw fish per example meal`;
-    $('lowC').textContent = safeNum(band.low,2) + ' µg/g';
-    $('centerC').textContent = safeNum(band.center,2) + ' µg/g';
-    $('highC').textContent = safeNum(band.high,2) + ' µg/g';
-    $('demoConcentrationValue').textContent = safeNum(band.center,2) + ' µg/g';
-    $('calcDetails').textContent = `Example only: (0.1 µg/kg/day × ${safeNum(p.weightKg,1)} kg) ÷ ${safeNum(band.high,2)} µg/g = ${safeNum(Core.consumptionLimitGramsDay(p.weightKg,band.high),1)} grams/day. Multiply by ${safeNum(Core.DAYS_PER_MONTH,2)} days/month, then divide by ${safeNum(p.portionOz * Core.GRAMS_PER_OUNCE,1)} grams per hypothetical meal. This is not a measured concentration or a safe meal limit.`;
-  }
-  const dialogs = {
-    science: {
-      title:'How the science works',
-      body:`<p><strong>This version contains no actual local measurements or verified advisory rules.</strong> It demonstrates the structure of EPA's chronic noncancer consumption-limit calculation using an imaginary concentration.</p>
-      <h3>The calculation</h3><div class="math-display">Fish amount (g/day) = Reference dose (µg/kg/day) × body weight (kg) ÷ fish concentration (µg/g)</div>
-      <p>For the methylmercury worked example, we use an RfD of 0.1 µg/kg body weight/day. The selected example concentration is invented, and the 40% range around it is invented too. The resulting meal count is <strong>not</strong> a fish advisory.</p>
-      <h3>Why the serving sizes differ</h3><p>Alabama's public fish-advisory materials describe an adult advisory meal as 8 ounces of raw fish (about 6 ounces cooked). The FDA/EPA national advice for pregnant or breastfeeding people and children uses a different 4-ounce adult reference serving. These are different frameworks. This prototype uses the Alabama adult meal for demonstration, and illustrative smaller child portions that require review before any real use.</p>
-      <h3>When verified data arrive</h3><ol><li>Import measured contaminants, species, sampling dates, and waterbody information.</li><li>Import current official Alabama advisories, matching waterbody boundaries and covered species.</li><li>Validate a geographic prediction model and its uncertainty intervals.</li><li>Apply the applicable official advisory rules and calculate the most restrictive appropriate limit. Never infer "safe" from missing data.</li><li>Have qualified environmental-health experts review the model and all public wording before publication.</li></ol>
-      <p><a href="${officialUrl}" target="_blank" rel="noopener noreferrer">Current Alabama fish advisories ↗</a><br><a href="https://www.epa.gov/choose-fish-and-shellfish-wisely/support-fish-and-shellfish-advisory-programs" target="_blank" rel="noopener noreferrer">EPA fish advisory guidance ↗</a></p>`
-    },
-    help: {
-      title:'Common questions',
-      body:`<h3>Can I use this to decide whether to eat a fish?</h3><p>No. This version is a <strong>research demonstration</strong>. It does not contain actual local contaminant measurements or official advisory restrictions. Check Alabama's published advisories before making food decisions.</p><h3>Why ask for age and weight?</h3><p>Age helps identify groups needing extra protection; body weight is one factor in the EPA exposure calculation. The inputs stay inside your browser and are not transmitted to the prototype operator.</p><h3>Why show a range?</h3><p>Future estimates may have uncertainty because fish sampled at different times and locations can contain different concentrations. The current range is invented for illustration. It is <em>not</em> an estimated confidence interval.</p><h3>Does "no advisory" mean safe?</h3><p>No. Missing data or no listed advisory does not prove safety. The real tool must distinguish those situations.</p><p><a href="${officialUrl}" target="_blank" rel="noopener noreferrer">See official Alabama advisories ↗</a></p>`
-    },
-    places: {
-      title:'About the example locations',
-      body:`<p>The map includes a short list of well-known Alabama lakes and rivers with <strong>approximate map coordinates</strong> for user-interface testing. These are not contaminant sampling locations, legal boundaries, or advisory polygons.</p><p>After you choose a fish, use <strong>Catch location</strong> to select a place on the map or search the location list.</p><p>Before a public release, we'll match real location boundaries and species to verified state advisory information, including separate advice for at-risk groups.</p><p><a href="${officialUrl}" target="_blank" rel="noopener noreferrer">Alabama's official advisory website ↗</a></p>`
-    }
-  };
-  function openInfo(kind) {
-    const item = dialogs[kind];
-    if (!item) return;
-    $('dialogTitle').textContent = item.title;
-    $('dialogBody').innerHTML = item.body; // static developer-maintained text only
-    if (typeof $('infoDialog').showModal === 'function') $('infoDialog').showModal();
-    else $('infoDialog').setAttribute('open','');
-  }
-  function setTheme(theme) {
-    const t = theme === 'dark' ? 'dark' : 'light';
-    document.documentElement.dataset.theme = t;
-    $('lightTheme').classList.toggle('selected', t === 'light');
-    $('darkTheme').classList.toggle('selected', t === 'dark');
-    $('lightTheme').setAttribute('aria-pressed', t === 'light' ? 'true' : 'false');
-    $('darkTheme').setAttribute('aria-pressed', t === 'dark' ? 'true' : 'false');
-    try { root.localStorage.setItem('fishAdvisorTheme',t); } catch (_err) { /* storage may be disabled */ }
-    if (state.map) setTimeout(() => state.map.invalidateSize(), 20);
-  }
-  function reset() {
-    state.fish = null; state.location = null; state.person = null; state.maxStep = 1;
-    state.demoConcentration = .25;
-    $('fishSearch').value = '';
-    $('locationSearch').value = '';
-    $('age').value = '';
-    $('weight').value = '';
-    $('weightUnit').value = 'lb';
-    $('mealSize').value = 'auto';
-    $('profileSex').value = 'unspecified';
-    $('lifeStage').value = 'general';
-    $('demoConcentration').value = '.25';
-    $('fishSelected').textContent = 'None yet';
-    $('locationSelected').textContent = 'None yet';
-    $('to2').disabled = true; $('to3').disabled = true;
-    renderFishes(); renderLocations(); showStep(1);
-  }
-  function setup() {
-    renderFishes(); renderLocations(); updateStepper();
-    $('fishSearch').addEventListener('input',renderFishes);
-    $('locationSearch').addEventListener('input',renderLocations);
-    $('to2').addEventListener('click', () => showStep(2));
-    $('back2').addEventListener('click', () => showStep(1));
-    $('to3').addEventListener('click', () => showStep(3));
-    $('back3').addEventListener('click', () => showStep(2));
-    $('back4').addEventListener('click', () => showStep(3));
-    $('startOver').addEventListener('click',reset);
-    $('demoConcentration').addEventListener('input', event => { state.demoConcentration = Number(event.target.value); renderResult(); });
-    $('personForm').addEventListener('submit', event => {
-      event.preventDefault();
-      try {
-        state.person = readPerson();
-        $('formError').hidden = true;
-        state.maxStep = 4;
-        renderResult(); showStep(4);
-      } catch (err) { $('formError').textContent = err.message; $('formError').hidden = false; }
-    });
-    $('lightTheme').addEventListener('click', () => setTheme('light'));
-    $('darkTheme').addEventListener('click', () => setTheme('dark'));
-    $('closeDialog').addEventListener('click', () => $('infoDialog').close());
-    $('infoDialog').addEventListener('click', e => { if (e.target === $('infoDialog')) $('infoDialog').close(); });
-    document.querySelectorAll('.step-button').forEach(btn => btn.addEventListener('click', () => showStep(Number(btn.dataset.step))));
-    document.querySelectorAll('[data-nav]').forEach(btn => btn.addEventListener('click',() => {
-      const route = btn.dataset.nav;
-      if (route === 'home') showStep(1);
-      else if (route === 'places') { if (state.fish) showStep(2); else openInfo('places'); }
-      else openInfo(route);
-      document.querySelectorAll('.top-nav .nav-link').forEach(n => n.classList.toggle('current',n.dataset.nav === route));
-    }));
-    try { setTheme(root.localStorage.getItem('fishAdvisorTheme') || 'light'); } catch (_err) { setTheme('light'); }
-  }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded',setup);
-  else setup();
-}(typeof window !== 'undefined' ? window : globalThis));
+  setTimeout(()=>map.invalidateSize(),250);
+ }catch(e){drawFallbackMap()}
+}
+function setTheme(theme){
+ state.theme=theme==='light'?'light':'dark';document.documentElement.dataset.theme=state.theme;
+ $('themeToggle').innerHTML=state.theme==='dark'?'☼ <span>Light mode</span>':'◐ <span>Dark mode</span>';
+ $('themeToggle').setAttribute('aria-pressed',String(state.theme==='light'));
+ try{localStorage.setItem('alabamaFishV2Theme',state.theme)}catch(_e){}
+ if(state.map){
+  state.map.eachLayer(layer=>{if(layer instanceof root.L.TileLayer){state.map.removeLayer(layer)}});
+  root.L.tileLayer(`https://{s}.basemaps.cartocdn.com/${state.theme==='dark'?'dark_all':'light_all'}/{z}/{x}/{y}{r}.png`,{subdomains:'abcd',maxZoom:19,attribution:'&copy; OpenStreetMap contributors &copy; CARTO'}).addTo(state.map);
+  setTimeout(()=>state.map.invalidateSize(),150);
+ }
+}
+function personInput(){
+ const age=Number($('age').value),weight=Number($('weight').value),unit=$('weightUnit').value;
+ if(!$('species').value||!fish($('species').value))throw new Error('First, choose a fish species.');
+ if(!$('location').value||!locate($('location').value))throw new Error('Choose a lake or river, or select a marker on the map.');
+ if(!$('age').value.trim()||!Number.isInteger(age)||age<1||age>120)throw new Error('Enter an age between 1 and 120 years.');
+ if(!$('weight').value.trim()||!Number.isFinite(weight)||weight<=0||(unit==='lb'?weight>650:weight>295))throw new Error('Enter a valid body weight.');
+ const kg=Core.kgFrom(weight,unit);
+ if(kg<4||kg>295)throw new Error('The weight is outside the supported demonstration range.');
+ const mealSize=$('mealSize').value==='auto'?Core.illustrativePortionOz(age):Number($('mealSize').value);
+ const conc=Number($('demoConcentration').value);
+ return{age,weight,unit,kg,mealSize,conc,stage:$('lifeStage').value};
+}
+function renderResult(p){
+ const f=fish($('species').value),l=locate($('location').value),band=Core.imaginaryScenario(p.conc),moreCautious=band.high;
+ const meals=Core.exampleMealsMonth(p.kg,moreCautious,p.mealSize);
+ $('emptyResult').hidden=true;$('filledResult').hidden=false;$('resultStatus').textContent='DEMO · NO ADVICE';$('resultStatus').classList.add('active');
+ $('resultFishArt').innerHTML=fishArt(f);
+ $('resultFishName').textContent=f.name;
+ $('resultPlace').textContent=`⌖ ${l.name} · Alabama · example selection`;
+ $('mealCount').textContent=fmt(meals,1);
+ $('resultMealInfo').textContent=`For a ${fmt(p.mealSize,0)} oz raw-fish demonstration portion · age ${p.age} · ${fmt(p.weight,1)} ${p.unit}. This is not an approved meal limit.`;
+ $('resultConcentration').textContent=`${fmt(p.conc)} µg/g (invented)`;
+ $('resultBand').textContent=`${fmt(band.low)}–${fmt(band.high)} µg/g (invented)`;
+ state.person=p;
+ document.getElementById('results').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+const MODALS={
+ method:{title:'EPA calculation and assumptions',body:`<p><b>No site-specific mercury measurements or official advisory rules are included.</b> This is a worked example of EPA's noncancer consumption-rate equation, not a public safety tool.</p><div class="math-panel">Allowable illustrative fish intake (g/day) = RfD (µg/kg/day) × body weight (kg) ÷ contaminant concentration (µg/g)</div><p>Our methylmercury example uses the EPA reference dose <b>0.1 µg/kg/day</b>. We divide the illustrative daily amount by a chosen raw-fish portion and express it as a theoretical number of portions per month. The example uses the <b>high</b> end of a fabricated ±40% scenario interval. This does not constitute a validated uncertainty analysis.</p><h3>Portions matter</h3><p>Alabama's state advisory materials use an 8-ounce raw-fish reference meal for adults. The FDA/EPA national guidance uses a 4-ounce adult reference serving for certain groups. The smaller child portions in this demo are illustrative and require expert review before public use.</p><h3>Before making real recommendations</h3><p>We need verified monitoring results, dates, species, sampling locations, exposure assumptions, matched state advisory boundaries, multiple-contaminant handling, calibrated prediction intervals, and environmental-health review. <b>Official restrictions must always be honored. Missing monitoring data never establishes safety.</b></p><p><a href="https://www.epa.gov/choose-fish-and-shellfish-wisely/support-fish-and-shellfish-advisory-programs" target="_blank" rel="noopener noreferrer">EPA fish advisory resources ↗</a></p>`},
+ uncertainty:{title:'Uncertainty and monitoring gaps',body:`<p>The map's multicolor layer is a demonstration of how we might present <b>measured concentrations</b> in the future. Every concentration and region in that preview is made up. The current example range is also invented, not a confidence interval.</p><h3>Future uncertainty reporting</h3><p>For measured data, show the number and dates of samples, sampling location, and observed variation. For validated predictions, distinguish modeled estimates from measurements, report prediction intervals, and identify out-of-sample validation coverage. Where evidence is insufficient, say <b>“Not enough information”</b>, not “safe.”</p><h3>Monitoring priorities</h3><p>A future model could rank locations for additional sampling using predictive uncertainty, potential exposure, and geographic coverage. No such ranking exists in V2.</p>`},
+ alternatives:{title:'Safer fish alternatives',body:`<p>V2 does not know which fish are safer at any selected Alabama waterbody, because we have not loaded real measurements or current official restrictions. It would be misleading to recommend specific alternatives.</p><p>In the future, this section can show verified lower-exposure options within the same area, with clear species, location, portion, and group-specific restrictions.</p><p><a href="https://www.alabamapublichealth.gov/tox/fish-advisories.html" target="_blank" rel="noopener noreferrer">Read current Alabama fish advisories ↗</a></p>`}
+};
+function openModal(kind){const m=MODALS[kind];if(!m)return;$('dialogHeading').textContent=m.title;$('dialogContent').innerHTML=m.body;if($('infoDialog').showModal)$('infoDialog').showModal();else $('infoDialog').setAttribute('open','')}
+function run(){
+ seedForm();
+ document.querySelectorAll('[data-layer]').forEach(btn=>btn.addEventListener('click',()=>setMapLayer(btn.dataset.layer)));
+ document.querySelectorAll('[data-dialog]').forEach(btn=>btn.addEventListener('click',()=>openModal(btn.dataset.dialog)));
+ $('showMath').addEventListener('click',()=>openModal('method'));
+ $('dialogClose').addEventListener('click',()=>$('infoDialog').close());
+ $('infoDialog').addEventListener('click',e=>{if(e.target===$('infoDialog'))$('infoDialog').close()});
+ $('themeToggle').addEventListener('click',()=>setTheme(state.theme==='dark'?'light':'dark'));
+ $('resetMap').addEventListener('click',()=>{if(state.map)state.map.flyTo([32.7,-86.8],7)});
+ $('location').addEventListener('change',()=>{if($('location').value)setLocation($('location').value)});
+ $('species').addEventListener('change',()=>{state.fishId=$('species').value});
+ $('checkerForm').addEventListener('submit',e=>{
+  e.preventDefault();$('validationMessage').hidden=true;
+  try{renderResult(personInput())}catch(err){$('validationMessage').textContent=err.message;$('validationMessage').hidden=false}
+ });
+ $('clearForm').addEventListener('click',()=>{
+  $('checkerForm').reset();state.person=null;state.locationId='';state.fishId='';$('selectedMapText').textContent='Select a lake or river';
+  $('filledResult').hidden=true;$('emptyResult').hidden=false;$('resultStatus').textContent='NOT ASSESSED';$('resultStatus').classList.remove('active');$('validationMessage').hidden=true;
+  for(const m of state.markers.values())m.setStyle({radius:6,weight:1.8,color:'#073342'});
+  if(state.map)state.map.flyTo([32.7,-86.8],7);else drawFallbackMap();
+ });
+ const links=document.querySelectorAll('.nav-item');
+ links.forEach(l=>l.addEventListener('click',()=>{links.forEach(x=>x.classList.toggle('active',x===l));if(l.dataset.nav==='map-section'&&state.map)setTimeout(()=>state.map.invalidateSize(),100)}));
+ try{state.theme=localStorage.getItem('alabamaFishV2Theme')==='light'?'light':'dark'}catch(_e){}
+ document.documentElement.dataset.theme=state.theme;$('themeToggle').innerHTML=state.theme==='dark'?'☼ <span>Light mode</span>':'◐ <span>Dark mode</span>';
+ initMap();
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run);else run();
+})(window);
