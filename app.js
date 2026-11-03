@@ -36,7 +36,7 @@ const DEMO_REGIONS=[
 {name:'Southern-west demo zone',value:0.18,coords:[[32.77,-88.47],[33.15,-87.08],[32.77,-87.08],[32.0,-86.9],[31.0,-87.3],[30.4,-87.9],[30.35,-88.03],[31.0,-88.47]]},
 {name:'Southern-east demo zone',value:0.49,coords:[[32.77,-87.08],[32.6,-85.15],[31.0,-85.0],[31,-87.3],[32,-86.9]]}
 ];
-const state={map:null,markers:new Map(),regionGroup:null,priorityGroup:null,layer:'coverage',locationId:'',fishId:'',person:null,theme:'dark'};
+const state={map:null,markers:new Map(),regionGroup:null,priorityGroup:null,layer:'coverage',locationId:'',fishId:'',person:null,theme:'dark',fallbackActive:false};
 const locate=id=>LOCATIONS.find(x=>x.id===id);
 const fish=id=>FISH.find(x=>x.id===id);
 const fmt=(v,d=2)=>Number(v).toFixed(d).replace(/\.00$/,'');
@@ -56,8 +56,8 @@ function setLocation(id,fromMap=false){
  $('location').value=id;
  $('selectedMapText').textContent=locate(id).name;
  for(const [mid,m] of state.markers)m.setStyle({radius:mid===id?11:6,weight:mid===id?3:1.8,color:mid===id?'#ffffff':'#073342'});
- if(state.map && !fromMap){const loc=locate(id);state.map.flyTo([loc.lat,loc.lon],Math.max(8,state.map.getZoom()),{duration:.4})}
- if(!state.map)drawFallbackMap();
+ if(state.map && !state.fallbackActive && !fromMap){const loc=locate(id);state.map.flyTo([loc.lat,loc.lon],Math.max(8,state.map.getZoom()),{duration:.4})}
+ if(!state.map || state.fallbackActive)drawFallbackMap();
 }
 function demoColor(n){return n<.15?'#31a87b':n<.25?'#e0c34e':n<.4?'#f5a136':'#f37565'}
 function setLegend(layer){
@@ -81,7 +81,7 @@ function setMapLayer(layer){
  state.layer=layer;
  document.querySelectorAll('[data-layer]').forEach(b=>{const on=b.dataset.layer===layer;b.classList.toggle('selected',on);b.setAttribute('aria-pressed',String(on))});
  setLegend(layer);
- if(!state.map||!root.L){drawFallbackMap();return;}
+ if(!state.map||!root.L||state.fallbackActive){drawFallbackMap();return;}
  if(state.regionGroup)state.map.removeLayer(state.regionGroup);
  if(state.priorityGroup)state.map.removeLayer(state.priorityGroup);
  if(layer==='demo-mercury'){
@@ -95,6 +95,7 @@ function setMapLayer(layer){
  for(const loc of LOCATIONS){const m=state.markers.get(loc.id);if(!m)continue;m.setStyle({fillColor:layer==='demo-mercury'?demoColor(loc.demo):'#30c9e9',fillOpacity:.95})}
 }
 function drawFallbackMap(){
+  state.fallbackActive = true;
   // SVG map retains functional location selection when external basemap/Leaflet scripts are unavailable.
   // Its state outline and waterways are stylized (NOT geospatial regulatory boundaries).
   const el=$('mapFallback');el.hidden=false;el.classList.add('svg-map-fallback');
@@ -130,14 +131,28 @@ function drawFallbackMap(){
   });
 }
 
+// Leaflet uses the public OpenStreetMap standard tiles for modest-use research demos.
+// If tiles cannot load, display our built-in interactive Alabama illustration.
+// This avoids showing provider error tiles as though they were a real basemap.
 function initMap(){
  setLegend('coverage');
  if(!root.L){drawFallbackMap();return}
  try{
   const map=root.L.map('map',{zoomControl:true,scrollWheelZoom:false,minZoom:5,maxZoom:14,preferCanvas:true});
   state.map=map;map.setView([32.7,-86.8],7);
-  const base=state.theme==='dark'?'dark_all':'light_all';
-  root.L.tileLayer(`https://{s}.basemaps.cartocdn.com/${base}/{z}/{x}/{y}{r}.png`,{subdomains:'abcd',maxZoom:19,attribution:'&copy; OpenStreetMap contributors &copy; CARTO'}).addTo(map);
+  let loadedTiles=0,failedTiles=0;
+  const base=root.L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    maxZoom:19,
+    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors'
+  });
+  base.on('tileload',()=>{loadedTiles++});
+  base.on('tileerror',()=>{
+    failedTiles++;
+    if(loadedTiles===0&&failedTiles>=4&&!state.fallbackActive)drawFallbackMap();
+  });
+  base.addTo(map);
+  // A blocked map provider sometimes hangs without firing all tile errors.
+  setTimeout(()=>{if(loadedTiles===0&&!state.fallbackActive)drawFallbackMap()},12000);
   for(const loc of LOCATIONS){
    const m=root.L.circleMarker([loc.lat,loc.lon],{radius:6,color:'#073342',weight:1.8,fillColor:'#30c9e9',fillOpacity:.95}).addTo(map);
    m.bindTooltip(loc.name,{direction:'top'});
@@ -152,11 +167,9 @@ function setTheme(theme){
  $('themeToggle').innerHTML=state.theme==='dark'?'☼ <span>Light mode</span>':'◐ <span>Dark mode</span>';
  $('themeToggle').setAttribute('aria-pressed',String(state.theme==='light'));
  try{localStorage.setItem('alabamaFishV2Theme',state.theme)}catch(_e){}
- if(state.map){
-  state.map.eachLayer(layer=>{if(layer instanceof root.L.TileLayer){state.map.removeLayer(layer)}});
-  root.L.tileLayer(`https://{s}.basemaps.cartocdn.com/${state.theme==='dark'?'dark_all':'light_all'}/{z}/{x}/{y}{r}.png`,{subdomains:'abcd',maxZoom:19,attribution:'&copy; OpenStreetMap contributors &copy; CARTO'}).addTo(state.map);
-  setTimeout(()=>state.map.invalidateSize(),150);
- }
+ // CSS recolors only the basemap tiles. This retains markers, selections,
+ // layers, attribution, and viewport without requesting duplicate tiles.
+ if(state.map&&!state.fallbackActive)setTimeout(()=>state.map.invalidateSize(),150);
 }
 function personInput(){
  const age=Number($('age').value),weight=Number($('weight').value),unit=$('weightUnit').value;
@@ -198,7 +211,7 @@ function run(){
  $('dialogClose').addEventListener('click',()=>$('infoDialog').close());
  $('infoDialog').addEventListener('click',e=>{if(e.target===$('infoDialog'))$('infoDialog').close()});
  $('themeToggle').addEventListener('click',()=>setTheme(state.theme==='dark'?'light':'dark'));
- $('resetMap').addEventListener('click',()=>{if(state.map)state.map.flyTo([32.7,-86.8],7)});
+ $('resetMap').addEventListener('click',()=>{if(state.map&&!state.fallbackActive)state.map.flyTo([32.7,-86.8],7);else drawFallbackMap()});
  $('location').addEventListener('change',()=>{if($('location').value)setLocation($('location').value)});
  $('species').addEventListener('change',()=>{state.fishId=$('species').value});
  $('checkerForm').addEventListener('submit',e=>{
@@ -209,7 +222,7 @@ function run(){
   $('checkerForm').reset();state.person=null;state.locationId='';state.fishId='';$('selectedMapText').textContent='Select a lake or river';
   $('filledResult').hidden=true;$('emptyResult').hidden=false;$('resultStatus').textContent='NOT ASSESSED';$('resultStatus').classList.remove('active');$('validationMessage').hidden=true;
   for(const m of state.markers.values())m.setStyle({radius:6,weight:1.8,color:'#073342'});
-  if(state.map)state.map.flyTo([32.7,-86.8],7);else drawFallbackMap();
+  if(state.map&&!state.fallbackActive)state.map.flyTo([32.7,-86.8],7);else drawFallbackMap();
  });
  const links=document.querySelectorAll('.nav-item');
  links.forEach(l=>l.addEventListener('click',()=>{links.forEach(x=>x.classList.toggle('active',x===l));if(l.dataset.nav==='map-section'&&state.map)setTimeout(()=>state.map.invalidateSize(),100)}));

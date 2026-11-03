@@ -11,7 +11,7 @@ A **static, responsive research-prototype website** for exploring Alabama fishin
 - The catch-checking process remains visible as numbered species → location → personal profile → example result steps.
 - Clicking example markers (or selecting a location in the form) selects a place for the checker.
 - Map layer options: **Locations**, **Mercury preview** (imaginary concentrations and illustrative zones), **Monitoring preview** (imaginary future sampling zones). A clear status notice appears with each layer.
-- Map uses Leaflet and CARTO/OpenStreetMap tiles when the browser can reach them; otherwise, an included, interactive **stylized SVG Alabama backup map** allows location selection and layer preview without a basemap service. The backup drawing is not a regulatory boundary map.
+- Map uses Leaflet and OpenStreetMap standard map tiles when the browser can reach them; otherwise, an included, interactive **stylized SVG Alabama backup map** allows location selection and layer preview without a basemap service. The backup drawing is not a regulatory boundary map.
 - Example result includes fish illustration, an EPA-based mathematical consumption calculation, and an entirely fictional illustrative scenario band. It does not claim measured confidence or show a recommendation to eat fish.
 - Dark is the default theme; a light mode is also available and can be removed later without changing the calculations.
 - A section reserved for future AI modeling of unmonitored waterbodies and monitoring priorities.
@@ -39,7 +39,7 @@ python -m http.server 8000
 
 Then visit `http://localhost:8000/`.
 
-An internet connection enables Leaflet and the CARTO basemap, but the fallback location map and calculator can still function without them.
+An internet connection enables Leaflet and the OpenStreetMap basemap, but the fallback location map and calculator can still function without them.
 
 ## Publish to GitHub Pages
 
@@ -82,3 +82,13 @@ We tested the forms, the offline SVG map with example colored layers, keyboard/m
 ## Proposed steps for real data
 
 Data ingestion → waterbody/species matching → measured values and uncertainty → harmonized state advisories → validated predictions with calibration → monitoring priority model → independent environmental-health review → public release. `data/example-schema.json` is only a starting documentation sketch, not a ready-to-run importer.
+
+
+### Basemap reliability (V2 map patch)
+The map now uses the OpenStreetMap Standard raster tile URL (no CARTO API key).
+The dark appearance is applied in CSS to the raster tiles only, not to
+marker or overlay colors. If no tiles load, the existing clickable SVG Alabama
+map appears automatically; this is an approximate illustration, not official
+geography or a fish advisory. Use of the public OSM tile service must follow its
+Tile Usage Policy; for significant public traffic, plan for a hosted or
+self-hosted tile provider with appropriate service terms and reliability.

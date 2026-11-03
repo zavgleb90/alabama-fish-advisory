@@ -8,7 +8,7 @@
   <title>Alabama Fish Advisory · Scientific Dashboard V2</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
   <link rel="preconnect" href="https://unpkg.com">
-  <link rel="preconnect" href="https://a.basemaps.cartocdn.com">
+  <link rel="preconnect" href="https://tile.openstreetmap.org">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="styles.css">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
@@ -56,7 +56,7 @@
         <button id="resetMap" type="button" class="reset-map" title="Show Alabama map extent" aria-label="Reset Alabama map extent">⌖</button>
         <div class="map-watermark" id="mapWatermark">RESEARCH DEMONSTRATION</div>
       </div>
-      <div class="map-bottom"><span><b id="mapLocationCount">12</b> example places · <span id="selectedMapText">Select a lake or river</span></span><span>Basemap © OpenStreetMap · CARTO</span></div>
+      <div class="map-bottom"><span><b id="mapLocationCount">12</b> example places · <span id="selectedMapText">Select a lake or river</span></span><span>Basemap © OpenStreetMap contributors</span></div>
       <div class="map-insight"><span class="map-insight-icon">⌁</span><div><h3>Built for future mercury data</h3><p>Layer controls are ready for observations, modeled concentrations, and monitoring priorities. Current colored overlays are <b>fictional previews</b> only.</p></div></div>
     </section>
     <div class="right-column">
