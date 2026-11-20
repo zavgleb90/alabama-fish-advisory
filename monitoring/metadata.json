@@ -1,0 +1,11 @@
+{
+  "n_stations": 395,
+  "n_waterbody_labels": 218,
+  "n_modern_stations": 259,
+  "n_2024_stations": 42,
+  "n_duplicate_coords": 1,
+  "unmatched_station_codes": {
+    "GUNM-8A": 2,
+    "TRKB-1": 6
+  }
+}
