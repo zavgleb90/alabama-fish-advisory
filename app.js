@@ -138,7 +138,7 @@ function initMap(){
  setLegend('coverage');
  if(!root.L){drawFallbackMap();return}
  try{
-  const map=root.L.map('map',{zoomControl:true,scrollWheelZoom:false,minZoom:5,maxZoom:14,preferCanvas:true});
+  const map=root.L.map('map',{zoomControl:true,scrollWheelZoom:true,minZoom:5,maxZoom:14,preferCanvas:true});
   state.map=map;map.setView([32.7,-86.8],7);
   let loadedTiles=0,failedTiles=0;
   const base=root.L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{

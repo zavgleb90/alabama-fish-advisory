@@ -252,7 +252,7 @@ function start(){
  initializeControls();
  if(!window.L){render();return}
  try{
-  map=L.map('map',{scrollWheelZoom:false}).setView([32.7,-86.8],7);let loaded=0,errors=0;
+  map=L.map('map',{scrollWheelZoom:true}).setView([32.7,-86.8],7);let loaded=0,errors=0;
   const base=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors'});
   base.on('tileload',()=>loaded++);base.on('tileerror',()=>{errors++;if(loaded===0&&errors>=6)fallback()});base.addTo(map);
   setTimeout(()=>{if(loaded===0&&map)fallback()},15000);
