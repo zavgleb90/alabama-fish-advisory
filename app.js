@@ -48,16 +48,16 @@ function fishArt(f){
 function seedForm(){
  for(const f of FISH){const o=document.createElement('option');o.value=f.id;o.textContent=f.name;$('species').append(o)}
  for(const l of LOCATIONS){const o=document.createElement('option');o.value=l.id;o.textContent=l.name;$('location').append(o)}
- $('mapLocationCount').textContent=LOCATIONS.length;
+ if($('mapLocationCount'))$('mapLocationCount').textContent=LOCATIONS.length;
 }
 function setLocation(id,fromMap=false){
  if(!locate(id))return;
  state.locationId=id;
  $('location').value=id;
- $('selectedMapText').textContent=locate(id).name;
+ if($('selectedMapText'))$('selectedMapText').textContent=locate(id).name;
  for(const [mid,m] of state.markers)m.setStyle({radius:mid===id?11:6,weight:mid===id?3:1.8,color:mid===id?'#ffffff':'#073342'});
  if(state.map && !state.fallbackActive && !fromMap){const loc=locate(id);state.map.flyTo([loc.lat,loc.lon],Math.max(8,state.map.getZoom()),{duration:.4})}
- if(!state.map || state.fallbackActive)drawFallbackMap();
+ if($('mapFallback')&&(!state.map || state.fallbackActive))drawFallbackMap();
 }
 function demoColor(n){return n<.15?'#31a87b':n<.25?'#e0c34e':n<.4?'#f5a136':'#f37565'}
 function setLegend(layer){
@@ -174,7 +174,7 @@ function setTheme(theme){
 function personInput(){
  const age=Number($('age').value),weight=Number($('weight').value),unit=$('weightUnit').value;
  if(!$('species').value||!fish($('species').value))throw new Error('First, choose a fish species.');
- if(!$('location').value||!locate($('location').value))throw new Error('Choose a lake or river, or select a marker on the map.');
+ if(!$('location').value||!locate($('location').value))throw new Error('Choose an example lake or river from the list.');
  if(!$('age').value.trim()||!Number.isInteger(age)||age<1||age>120)throw new Error('Enter an age between 1 and 120 years.');
  if(!$('weight').value.trim()||!Number.isFinite(weight)||weight<=0||(unit==='lb'?weight>650:weight>295))throw new Error('Enter a valid body weight.');
  const kg=Core.kgFrom(weight,unit);
@@ -211,7 +211,7 @@ function run(){
  $('dialogClose').addEventListener('click',()=>$('infoDialog').close());
  $('infoDialog').addEventListener('click',e=>{if(e.target===$('infoDialog'))$('infoDialog').close()});
  $('themeToggle').addEventListener('click',()=>setTheme(state.theme==='dark'?'light':'dark'));
- $('resetMap').addEventListener('click',()=>{if(state.map&&!state.fallbackActive)state.map.flyTo([32.7,-86.8],7);else drawFallbackMap()});
+ // The legacy twelve-location demonstration map is replaced by the real mercury station explorer above.
  $('location').addEventListener('change',()=>{if($('location').value)setLocation($('location').value)});
  $('species').addEventListener('change',()=>{state.fishId=$('species').value});
  $('checkerForm').addEventListener('submit',e=>{
@@ -219,16 +219,16 @@ function run(){
   try{renderResult(personInput())}catch(err){$('validationMessage').textContent=err.message;$('validationMessage').hidden=false}
  });
  $('clearForm').addEventListener('click',()=>{
-  $('checkerForm').reset();state.person=null;state.locationId='';state.fishId='';$('selectedMapText').textContent='Select a lake or river';
+  $('checkerForm').reset();state.person=null;state.locationId='';state.fishId='';if($('selectedMapText'))$('selectedMapText').textContent='Select a lake or river';
   $('filledResult').hidden=true;$('emptyResult').hidden=false;$('resultStatus').textContent='NOT ASSESSED';$('resultStatus').classList.remove('active');$('validationMessage').hidden=true;
   for(const m of state.markers.values())m.setStyle({radius:6,weight:1.8,color:'#073342'});
-  if(state.map&&!state.fallbackActive)state.map.flyTo([32.7,-86.8],7);else drawFallbackMap();
+  if(state.map&&!state.fallbackActive)state.map.flyTo([32.7,-86.8],7);
  });
  const links=document.querySelectorAll('.nav-item');
  links.forEach(l=>l.addEventListener('click',()=>{links.forEach(x=>x.classList.toggle('active',x===l));if(l.dataset.nav==='map-section'&&state.map)setTimeout(()=>state.map.invalidateSize(),100)}));
  try{state.theme=localStorage.getItem('alabamaFishV2Theme')==='light'?'light':'dark'}catch(_e){}
  document.documentElement.dataset.theme=state.theme;$('themeToggle').innerHTML=state.theme==='dark'?'☼ <span>Light mode</span>':'◐ <span>Dark mode</span>';
- initMap();
+ // No second/illustrative map is initialized on the homepage.
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run);else run();
 })(window);

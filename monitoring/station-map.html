@@ -1,4 +1,5 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<!doctype html><html lang="en"><head>
+<script>if(new URLSearchParams(location.search).get("embedded")==="1")document.documentElement.classList.add("embedded-monitoring");</script><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Alabama Fish Advisory Tool · Mercury Monitoring Map</title>
 <meta name="description" content="Research visualization of Alabama fish tissue mercury observations by station, species and year. Not consumption advice.">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
@@ -36,6 +37,19 @@ h2{margin:13px 0 9px}.stats-intro{background:#123147;border:1px solid #2a526a;bo
 .hint{color:#fbd5a2;font-size:11px;margin:6px 0}.banner{background:#133348;border-left:3px solid var(--cyan);padding:8px 10px;border-radius:4px;font-size:11px;color:#bad7e6;margin:10px 0}.legend-row small{color:#afc7d3}
 @media(max-width:840px){aside{max-height:none}.layout{display:flex;flex-direction:column}.map-wrap{order:0;min-height:480px}#map{height:65vh;min-height:480px}.count strong{font-size:23px}.station-card{margin-bottom:30px}}
 @media(max-width:460px){header{flex-wrap:wrap}.head-note{font-size:9px}.filters-grid{grid-template-columns:1fr}.count-box{grid-template-columns:repeat(2,1fr)}}
+
+/* Embedded display inside the Alabama Fish Advisory Tool homepage. */
+.embedded-monitoring header{display:none!important}
+.embedded-monitoring .layout{min-height:100vh}
+.embedded-monitoring aside{max-height:100vh}
+.embedded-monitoring .map-wrap{min-height:100vh}
+.embedded-monitoring #map{height:100vh;min-height:750px}
+@media(max-width:840px){
+ .embedded-monitoring .layout{display:flex;flex-direction:column}
+ .embedded-monitoring aside{order:1;max-height:none}
+ .embedded-monitoring .map-wrap{order:0;min-height:480px}
+ .embedded-monitoring #map{height:58vh;min-height:480px}
+}
 </style>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" defer></script>

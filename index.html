@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Alabama Fish Advisory Decision Support research demonstration. Explore catch locations and an EPA-based worked example. No real mercury data or consumption advice are provided.">
+  <meta name="description" content="Alabama Fish Advisory Tool research prototype. Explore measured fish mercury concentrations across Alabama and a separate example consumption calculator. Not official eating advice.">
   <meta name="theme-color" content="#061424">
   <title>Alabama Fish Advisory Tool</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
@@ -17,19 +17,19 @@
 </head>
 <body>
 <a class="skip-link" href="#workspace">Skip to advisory checker</a>
-<div class="research-bar" role="note"><span class="live-dot"></span><b>RESEARCH PROTOTYPE · V2</b><span class="research-divider">/</span> No measured mercury data, validated predictions, or official advisory rules loaded. <b>Do not use for eating decisions.</b></div>
+<div class="research-bar" role="note"><span class="live-dot"></span><b>RESEARCH PROTOTYPE · V2</b><span class="research-divider">/</span> Historic mercury measurements are visualized; official advisory rules are not integrated. <b>Calculator results are not eating advice.</b></div>
 <header class="masthead" id="top">
   <div class="mast-inner">
     <a class="identity" href="#top" aria-label="Alabama Fish Advisory home">
       <span class="fish-logo" aria-hidden="true"><svg viewBox="0 0 92 72" fill="none"><path d="M5 39C21 18 54 13 69 36L86 22V54L69 41C52 61 21 64 5 39Z" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/><circle cx="27" cy="35" r="3.5" fill="currentColor"/><path d="M43 21L54 5L59 27M43 57L56 70M21 45L59 45" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></span>
-      <span class="identity-copy"><span class="identity-name">Alabama <em>Fish Advisory</em><span class="lightword"> Decision Support</span></span><span class="identity-tag">CATCH <span>•</span> ASSESS <span>•</span> EAT SAFER</span></span>
+      <span class="identity-copy"><span class="identity-name">Alabama <em>Fish Advisory</em><span class="lightword"> Tool</span></span><span class="identity-tag">CATCH <span>•</span> ASSESS <span>•</span> EAT SAFER</span></span>
     </a>
     <div class="mast-side"><span class="eyebrow">A SCIENCE-LED PUBLIC HEALTH RESEARCH TOOL</span><span>Alabama waters. Clearer decisions.</span></div>
   </div>
 </header>
 <nav class="nav" aria-label="Main navigation"><div class="nav-inner">
   <a class="nav-item active" href="#workspace" data-nav="workspace"><span aria-hidden="true">⌂</span> Advisory tool</a>
-  <a class="nav-item" href="#map-section" data-nav="map-section"><span aria-hidden="true">⌖</span> Map & layers</a>
+  <a class="nav-item" href="#map-section" data-nav="map-section"><span aria-hidden="true">⌖</span> Mercury map</a>
   <a class="nav-item" href="#modeling" data-nav="modeling"><span aria-hidden="true">▥</span> Predictive modeling</a>
   <a class="nav-item" href="#methods" data-nav="methods"><span aria-hidden="true">◈</span> Data & methods</a>
   <a class="nav-item" href="#guidance" data-nav="guidance"><span aria-hidden="true">✚</span> Health guidance</a>
@@ -39,28 +39,28 @@
 </div></nav>
 <main>
 <div class="content-shell">
-  <div class="intro-row"><div><span class="section-kicker">ENVIRONMENTAL HEALTH · ALABAMA</span><h1>Explore the water. <strong>Check your catch.</strong></h1><p>The future home for location-specific fish advisories, mercury monitoring, and personalized consumption guidance.</p></div><a class="official-link" href="https://www.alabamapublichealth.gov/tox/fish-advisories.html" target="_blank" rel="noopener noreferrer">Check current official advisories <span aria-hidden="true">↗</span></a></div>
+  <div class="intro-row"><div><span class="section-kicker">ENVIRONMENTAL HEALTH · ALABAMA</span><h1>Explore the water. <strong>Check your catch.</strong></h1><p>Explore historical mercury measurements from real Alabama monitoring stations. The catch-checking calculator is still a research demonstration.</p></div><a class="official-link" href="https://www.alabamapublichealth.gov/tox/fish-advisories.html" target="_blank" rel="noopener noreferrer">Check current official advisories <span aria-hidden="true">↗</span></a></div>
+  <section class="monitoring-home" id="map-section" aria-labelledby="monitoringTitle">
+    <div class="monitoring-head">
+      <div class="monitoring-head-copy">
+        <span class="section-kicker">REAL MONITORING DATA · 2000–2024</span>
+        <h2 id="monitoringTitle">Mercury in Alabama Fish</h2>
+        <p>Explore the actual sampling stations and fish tissue measurements. Choose a species, sampling period, waterbody, or county. Click a station to see its measured concentrations, summary statistics, and yearly results.</p>
+      </div>
+      <div class="monitoring-head-actions">
+        <span class="real-data-tag"><span class="real-data-dot"></span> Measured data</span>
+        <a class="monitor-full-link" href="monitoring/station-map.html" target="_blank" rel="noopener noreferrer">Open full map ↗</a>
+      </div>
+    </div>
+    <div class="monitoring-embed-shell">
+      <iframe id="mercuryExplorer" src="monitoring/station-map.html?embedded=1" title="Interactive Alabama mercury monitoring map, with station statistics and filters" loading="eager" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+    </div>
+    <div class="monitoring-footnote"><span><b>Data:</b> Alabama Fish Tissue Monitoring Program · total mercury (µg/g), 2000–2024. Color bands describe measured concentrations, not safe-to-eat categories. Values below detection limits are not treated as zero.</span><a href="monitoring/station-map.html" target="_blank" rel="noopener noreferrer">Larger view ↗</a></div>
+  </section>
+  <div class="checker-intro" id="checker-heading"><div><span class="section-kicker">SEPARATE DEMONSTRATION · NOT EATING ADVICE</span><h2>Check Your Catch</h2><p>The calculator below still uses hypothetical concentrations and twelve illustrative catch locations. It is not yet linked to station measurements or official Alabama fish consumption advisories.</p></div><a href="https://www.alabamapublichealth.gov/tox/fish-advisories.html" target="_blank" rel="noopener noreferrer">View official advisories ↗</a></div>
   <div class="dashboard" id="workspace">
-    <section class="panel map-panel" id="map-section" aria-labelledby="mapTitle">
-      <div class="panel-heading"><div><span class="section-kicker">SPATIAL EXPLORER</span><h2 id="mapTitle">Alabama Fish Advisory Map</h2><p>Explore lakes and rivers. Select a marker to set the catch location.</p></div><span class="panel-tag">INTERACTIVE</span></div>
-      <div class="layer-toolbar" role="group" aria-label="Map data layers">
-        <button class="layer-btn selected" data-layer="coverage" aria-pressed="true" type="button">◉ Locations</button>
-        <button class="layer-btn" data-layer="demo-mercury" aria-pressed="false" type="button">◐ Mercury preview</button>
-        <button class="layer-btn" data-layer="priority" aria-pressed="false" type="button">◇ Monitoring preview</button>
-      </div>
-      <div class="map-stage">
-        <div id="map" role="application" aria-label="Interactive Alabama map showing example fishing locations"></div>
-        <div id="mapFallback" hidden class="map-fallback"><div>⌖</div><strong>Map tiles unavailable</strong><p>You can still select your location from the catch form. The interactive map needs an internet connection.</p></div>
-        <div class="map-overlay top-overlay"><span class="map-indicator"></span><span id="mapStatus">PLACEHOLDER LOCATIONS ONLY</span></div>
-        <div class="map-overlay legend" id="mapLegend"><h3 id="legendTitle">Map key</h3><div id="legendBody"><div><i class="legend-mark cyan"></i> Example fishing location</div><div><i class="legend-mark hollow"></i> No verified advisory data</div></div><small id="legendNote">Markers are approximate, not sampling sites or advisory boundaries.</small></div>
-        <button id="resetMap" type="button" class="reset-map" title="Show Alabama map extent" aria-label="Reset Alabama map extent">⌖</button>
-        <div class="map-watermark" id="mapWatermark">RESEARCH DEMONSTRATION</div>
-      </div>
-      <div class="map-bottom"><span><b id="mapLocationCount">12</b> example places · <span id="selectedMapText">Select a lake or river</span></span><span>Basemap © OpenStreetMap contributors</span></div>
-      <div class="map-insight"><span class="map-insight-icon">⌁</span><div><h3>Built for future mercury data</h3><p>Layer controls are ready for observations, modeled concentrations, and monitoring priorities. Current colored overlays are <b>fictional previews</b> only.</p></div></div>
-    </section>
     <div class="right-column">
-      <section class="panel checker-panel" aria-labelledby="formTitle"><div class="panel-heading compact"><div><span class="section-kicker">CATCH CHECKER · THREE INPUT STEPS</span><h2 id="formTitle">Find a Fish Consumption Recommendation</h2><p>Choose a fish and catch location, then enter the information needed for a worked example.</p></div><span class="target-mark" aria-hidden="true">◎</span></div>
+      <section class="panel checker-panel" aria-labelledby="formTitle"><div class="panel-heading compact"><div><span class="section-kicker">CATCH CHECKER · THREE INPUT STEPS</span><h2 id="formTitle">Try a Fish Consumption Calculation</h2><p>Worked example only, using hypothetical mercury concentrations—not the measurements shown above.</p></div><span class="target-mark" aria-hidden="true">◎</span></div>
         <div class="workflow-indicators" aria-label="Checking process"><span><b>01</b> Species</span><span class="chev">→</span><span><b>02</b> Location</span><span class="chev">→</span><span><b>03</b> About you</span><span class="chev">→</span><span class="last"><b>04</b> Example result</span></div>
         <form id="checkerForm" novalidate>
           <div class="form-grid">
@@ -92,10 +92,10 @@
     <section class="feature-card" id="methods"><div class="feature-icon">∑</div><div><span class="section-kicker">SCIENTIFIC FOUNDATION</span><h2>Transparent methods</h2><p>The demo uses the EPA noncancer consumption-rate framework for methylmercury. When data arrive, measured tissue concentrations, official advisories, multiple contaminants, and validated geographic estimates must be considered before issuing any recommendation.</p><button type="button" class="text-link" data-dialog="method">View the equation and assumptions →</button></div></section>
     <section class="feature-card" id="guidance"><div class="feature-icon">✚</div><div><span class="section-kicker">HEALTH & SAFETY</span><h2>Plain-language guidance</h2><p>People who are pregnant, planning pregnancy, breastfeeding, or feeding children need special attention. The first public release must explain portions, give warnings clearly, and never label unsampled fish as safe.</p><a class="text-link" href="https://www.alabamapublichealth.gov/tox/fish-advisories.html" target="_blank" rel="noopener noreferrer">Read the state's current advice ↗</a></div></section>
   </div>
-  <section class="about-strip" id="about"><div><strong>Alabama Fish Advisory Decision Support</strong><p>Independent research demonstration. Not affiliated with or endorsed by the State of Alabama, FDA, or EPA.</p></div><div><span>Data: <b>not loaded</b></span><span>Model: <b>not trained</b></span><span>Advisories: <b>external link only</b></span></div></section>
+  <section class="about-strip" id="about"><div><strong>Alabama Fish Advisory Tool</strong><p>Independent research demonstration. Not affiliated with or endorsed by the State of Alabama, FDA, or EPA.</p></div><div><span>Mercury data: <b>2000–2024 observations</b></span><span>Model: <b>not trained</b></span><span>Advisories: <b>external link only</b></span></div></section>
 </div>
 </main>
-<footer><div>© 2026 Alabama Fish Advisory Decision Support · Research prototype</div><div><a href="#top">Back to top ↑</a><a href="https://www.alabamapublichealth.gov/tox/fish-advisories.html" target="_blank" rel="noopener noreferrer">Official Alabama advisories ↗</a></div></footer>
+<footer><div>© 2026 Alabama Fish Advisory Tool · Research prototype</div><div><a href="#top">Back to top ↑</a><a href="https://www.alabamapublichealth.gov/tox/fish-advisories.html" target="_blank" rel="noopener noreferrer">Official Alabama advisories ↗</a></div></footer>
 <dialog id="infoDialog" aria-labelledby="dialogHeading"><div class="dialog-header"><h2 id="dialogHeading">Methods</h2><button type="button" id="dialogClose" aria-label="Close information">×</button></div><div id="dialogContent"></div></dialog>
 </body>
 </html>
