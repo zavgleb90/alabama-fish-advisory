@@ -180,7 +180,14 @@ function updateSummary(){
  const sel=$('species');$('activeNote').textContent=sel.value==='*'?'Pooled across fish species; comparisons may be misleading. Choose one species for interpretation.':`Displaying ${sel.options[sel.selectedIndex].text.split(' (')[0]} · ${$('period').options[$('period').selectedIndex].text} · Total mercury (µg/g).`;
 }
 function detail(i,scroll=true){
- selected=i;const s=S[i],stat=currentMapStats.get(i)||stats([]),rows=rowsBySite.get(i)||[];
+ selected=i;
+ // The embedded map can populate the homepage checker using the selected real station and filters.
+ if(window.parent!==window){
+   try{window.parent.postMessage({source:'alabama-mercury-explorer',type:'station-selection',
+     stationId:S[i].id,speciesName:$('species').value==='*'?null:SPECIES[Number($('species').value)],
+     period:$('period').value,sampling:$('sampling').value},window.location.origin)}catch(_e){}
+ }
+ const s=S[i],stat=currentMapStats.get(i)||stats([]),rows=rowsBySite.get(i)||[];
  const label=stat.detected?`<span class="concentration-chip" style="--chip:${COLORS[styleColor(stat)]}">${number(stat.median)} µg/g</span>`:stat.nd?'<span class="concentration-chip">All results below detection</span>':'<span class="concentration-chip">No measurements under current filters</span>';
  $('selectedInfo').innerHTML=`<div class="detail-heading"><div><h3>${safe(s.id)}</h3><p><b>${safe(s.waterbody)}</b> · ${safe(s.county||'County not recorded')} County</p></div>${label}</div>
  <p class="station-subline">Basin: ${safe(s.basin||'Unspecified')} · ${s.lat.toFixed(5)}, ${s.lon.toFixed(5)}</p>
