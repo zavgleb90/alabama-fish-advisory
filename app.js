@@ -3,7 +3,7 @@
    Calculated meals are NOT official safety recommendations. */
 (function(root){
 'use strict';
-const Core=root.FishAdvisorCore;
+const Core=root.FishAdvisorCore, Data=root.MercuryData;
 const $=id=>document.getElementById(id);
 const fmt=(v,d=2)=>Number(v).toFixed(d).replace(/\.00$/,'');
 const FISH=[
@@ -28,19 +28,12 @@ function fishArt(f){
 }
 
 const median=a=>{if(!a.length)return null;const b=[...a].sort((x,y)=>x-y),m=b.length>>1;return b.length%2?b[m]:(b[m-1]+b[m])/2};
-function fitsYear(y,period){switch(period){case '70s':return y>=2000&&y<=2009;case '10s':return y>=2010&&y<=2019;case '20s':return y>=2020&&y<=2024;case '2024':return y===2024;default:return y>=2000&&y<=2024;}}
 function rowsFor(siteId,speciesName,period='all',sampling='preferred'){
  if(!db)return [];
  const station=stations.get(siteId),sp=db.species.indexOf(speciesName);
  if(!station||sp<0)return [];
- const rows=(bySiteSpecies.get(station._index+'|'+sp)||[]).filter(r=>fitsYear(r[1],period));
- if(sampling==='individual')return rows.filter(r=>r[3]===0);
- if(sampling==='composite')return rows.filter(r=>r[3]===1);
- if(sampling==='all')return rows;
- // Same filter as the map: prefer individual results at a station/day/species,
- // retaining composite results for other sampling events. These are not provably duplicates.
- const individualDays=new Set(rows.filter(r=>r[3]===0).map(r=>r[6]));
- return rows.filter(r=>r[3]!==1||!individualDays.has(r[6]));
+ const rows=(bySiteSpecies.get(station._index+'|'+sp)||[]).filter(r=>Data.fitsYear(r[1],period));
+ return Data.filterSampling(rows,sampling);
 }
 function summary(rows){
  const detected=rows.filter(r=>r[4]!==null&&Number.isFinite(r[4]));
@@ -56,10 +49,9 @@ function optionsFor(select,arr,placeholder){
 }
 async function loadObservations(){
  try{
-  const resp=await fetch('data/mercury_observations.json',{cache:'no-store'});
-  if(!resp.ok)throw new Error('Data file HTTP '+resp.status);
-  const d=await resp.json();
-  if(!Array.isArray(d.stations)||!Array.isArray(d.species)||!Array.isArray(d.records))throw new Error('Invalid measurement dataset');
+  const d=await Data.load();
+  Data.fillPeriods($('period'),d);
+  document.querySelectorAll('[data-period-label]').forEach(el=>el.textContent=Data.periodLabel(d));
   db=d;stations=new Map(d.stations.map((s,i)=>[s.id,{...s,_index:i}]));
   bySiteSpecies=new Map();
   for(const r of d.records){const key=r[0]+'|'+r[2];if(!bySiteSpecies.has(key))bySiteSpecies.set(key,[]);bySiteSpecies.get(key).push(r)}
@@ -67,11 +59,12 @@ async function loadObservations(){
   optionsFor($('species'),sNames.map(x=>[x,x]),'Choose a fish species');
   const places=[...stations.values()].sort((a,b)=>a.waterbody.localeCompare(b.waterbody)||a.id.localeCompare(b.id));
   optionsFor($('location'),places.map(s=>[s.id,`${s.waterbody} — ${s.id} (${s.county||'county not listed'})`]),'Choose a monitoring station');
-  $('species').value='Largemouth Bass';
-  $('dataLoadStatus').textContent=`Real data loaded: ${d.records.length.toLocaleString()} mercury measurements at 259 matched stations; ${d.stations.length} station locations and ${d.species.length} species labels. Select a station on the map or here.`;
+  $('species').value=db.species.includes('Largemouth Bass')?'Largemouth Bass':(db.species[0]||'');
+  $('dataLoadStatus').textContent=`Real data loaded: ${d.records.length.toLocaleString()} mercury measurements at ${new Set(d.records.map(r=>r[0])).size.toLocaleString()} matched stations; ${d.stations.length} station locations and ${d.species.length} species labels. Select a station on the map or here.`;
   $('runCheck').disabled=false;dataReady=true;
  }catch(err){
   $('dataLoadStatus').textContent='Could not load the measurement file. This page needs to run through GitHub Pages or a local web server. '+err.message;
+  document.querySelectorAll('[data-period-label]').forEach(el=>el.textContent='Unavailable');
   $('dataLoadStatus').classList.add('error');$('runCheck').disabled=true;
  }
 }
@@ -135,7 +128,7 @@ function renderResult(p){
 }
 const MODALS={
  method:{title:'EPA-based screening calculation: methodology',body:`<p>This prototype now uses <b>actual total-mercury observations</b> for the chosen station, species, and period. The concentration is the <b>median of numeric detected results</b>. Values below laboratory reporting limits are retained as nondetects and excluded from this preliminary median. This may bias the estimate upward when nondetects are numerous.</p><div class="math-panel">Allowable intake (g/day) = 0.1 µg/kg/day × body weight (kg) ÷ concentration (µg/g)<br>Calculated portions/month = intake (g/day) × 30.4375 ÷ portion weight (g)</div><p><b>Total mercury is used as a screening proxy for methylmercury.</b> This assumption must be reviewed. These calculations do not incorporate official Alabama advisories, other contaminants, multiple fish species in the diet, or specific guidance for pregnancy and children. Never use this number as an eating recommendation.</p><h3>Composites and individual samples</h3><p>The default matches the map: individual measurements take precedence where individual and composite records occur on the same station, collection date, and species. This is a pragmatic display rule, not proof that the underlying fish are duplicates. You can change it using the sampling selector.</p><p><a href="https://www.epa.gov/choose-fish-and-shellfish-wisely/support-fish-and-shellfish-advisory-programs" target="_blank" rel="noopener noreferrer">EPA advisory methodology ↗</a></p>`},
- uncertainty:{title:'What the measurements do and do not show',body:`<p>All observations come from the Alabama Fish Tissue Monitoring Program, with collection dates from 2000–2024. Different stations within the same reservoir are <b>separate sampling locations</b>. You are not viewing a modeled waterbody-wide average.</p><p>The minimum and maximum shown are observed extremes, <b>not a confidence interval</b>. The annual chart shows only numeric detected results; nondetects are counted separately. The latest sample year is displayed to avoid mistaking old data for current conditions.</p><p>When a selected fish has no numeric result, the tool does not estimate a concentration or a consumption limit. No data never means safe.</p>`},
+ uncertainty:{title:'What the measurements do and do not show',body:`<p>All observations come from the Alabama Fish Tissue Monitoring Program, with collection dates in the currently loaded dataset. Different stations within the same reservoir are <b>separate sampling locations</b>. You are not viewing a modeled waterbody-wide average.</p><p>The minimum and maximum shown are observed extremes, <b>not a confidence interval</b>. The annual chart shows only numeric detected results; nondetects are counted separately. The latest sample year is displayed to avoid mistaking old data for current conditions.</p><p>When a selected fish has no numeric result, the tool does not estimate a concentration or a consumption limit. No data never means safe.</p>`},
  alternatives:{title:'Safer fish alternatives',body:`<p>There is no reliable alternative-species recommendation in this prototype. Species-specific historical mercury values alone cannot establish that a fish is safe for a particular person to eat.</p><p><a href="https://www.alabamapublichealth.gov/tox/fish-advisories.html" target="_blank" rel="noopener noreferrer">Check current official Alabama advisories ↗</a></p>`}
 };
 function openModal(kind){const m=MODALS[kind];if(!m)return;$('dialogHeading').textContent=m.title;$('dialogContent').innerHTML=m.body;if($('infoDialog').showModal)$('infoDialog').showModal();else $('infoDialog').setAttribute('open','')}
@@ -148,7 +141,7 @@ function run(){
  $('themeToggle').addEventListener('click',()=>theme(document.documentElement.dataset.theme==='dark'?'light':'dark'));
  try{theme(localStorage.getItem('alabamaFishV2Theme')==='light'?'light':'dark')}catch(_){theme('dark')}
  $('checkerForm').addEventListener('submit',e=>{e.preventDefault();$('validationMessage').hidden=true;try{renderResult(personInput())}catch(err){$('validationMessage').textContent=err.message;$('validationMessage').hidden=false}});
- $('clearForm').addEventListener('click',()=>{ $('checkerForm').reset();$('species').value='Largemouth Bass';$('filledResult').hidden=true;$('emptyResult').hidden=false;$('resultStatus').textContent='NOT ASSESSED';$('resultStatus').classList.remove('active');$('validationMessage').hidden=true;$('mapSelectionBanner').hidden=true; });
+ $('clearForm').addEventListener('click',()=>{ $('checkerForm').reset();$('species').value=db?.species.includes('Largemouth Bass')?'Largemouth Bass':(db?.species[0]||'');$('filledResult').hidden=true;$('emptyResult').hidden=false;$('resultStatus').textContent='NOT ASSESSED';$('resultStatus').classList.remove('active');$('validationMessage').hidden=true;$('mapSelectionBanner').hidden=true; });
  // Only trust messages from the monitoring explorer iframe on this origin.
  root.addEventListener('message',event=>{
    const frame=$('mercuryExplorer');
@@ -157,7 +150,7 @@ function run(){
    if(!d||d.source!=='alabama-mercury-explorer'||d.type!=='station-selection'||!stations.has(d.stationId))return;
    $('location').value=d.stationId;
    if(d.speciesName&&db.species.includes(d.speciesName))$('species').value=d.speciesName;
-   if(['all','70s','10s','20s','2024'].includes(d.period))$('period').value=d.period;
+   if([...$('period').options].some(o=>o.value===d.period))$('period').value=d.period;
    if(['all','preferred','individual','composite'].includes(d.sampling))$('sampling').value=d.sampling;
    const s=locate(d.stationId);
    $('mapSelectionText').textContent=`Selected on map: ${s.waterbody} · ${s.id}${d.speciesName?' · '+d.speciesName:''}. Enter your details below.`;

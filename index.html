@@ -13,7 +13,8 @@
   <link rel="stylesheet" href="styles.css">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
   <script src="core.js" defer></script>
-  <script src="app.js?v=3.0" defer></script>
+  <script src="mercury-data.js?v=4" defer></script>
+  <script src="app.js?v=4" defer></script>
 </head>
 <body>
 <a class="skip-link" href="#workspace">Skip to advisory checker</a>
@@ -43,7 +44,7 @@
   <section class="monitoring-home" id="map-section" aria-labelledby="monitoringTitle">
     <div class="monitoring-head">
       <div class="monitoring-head-copy">
-        <span class="section-kicker">REAL MONITORING DATA · 2000–2024</span>
+        <span class="section-kicker">REAL MONITORING DATA · <span data-period-label>Loading…</span></span>
         <h2 id="monitoringTitle">Mercury in Alabama Fish</h2>
         <p>Explore the actual sampling stations and fish tissue measurements. Choose a species, sampling period, waterbody, or county. Click a station to see its measured concentrations, summary statistics, and yearly results.</p>
       </div>
@@ -53,9 +54,9 @@
       </div>
     </div>
     <div class="monitoring-embed-shell">
-      <iframe id="mercuryExplorer" src="monitoring/station-map.html?embedded=1" title="Interactive Alabama mercury monitoring map, with station statistics and filters" loading="eager" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+      <iframe id="mercuryExplorer" src="monitoring/station-map.html?embedded=1&amp;v=4" title="Interactive Alabama mercury monitoring map, with station statistics and filters" loading="eager" referrerpolicy="strict-origin-when-cross-origin"></iframe>
     </div>
-    <div class="monitoring-footnote"><span><b>Data:</b> Alabama Fish Tissue Monitoring Program · total mercury (µg/g), 2000–2024. Color bands describe measured concentrations, not safe-to-eat categories. Values below detection limits are not treated as zero.</span><a href="monitoring/station-map.html" target="_blank" rel="noopener noreferrer">Larger view ↗</a></div>
+    <div class="monitoring-footnote"><span><b>Data:</b> Alabama Fish Tissue Monitoring Program · total mercury (µg/g), <span data-period-label>loading…</span>. Color bands describe measured concentrations, not safe-to-eat categories. Values below detection limits are not treated as zero.</span><a href="monitoring/station-map.html" target="_blank" rel="noopener noreferrer">Larger view ↗</a></div>
   </section>
   <div class="map-selection-banner" id="mapSelectionBanner" hidden><span id="mapSelectionText"></span><a href="#workspace">Continue to the catch checker ↓</a></div>
   <div class="checker-intro" id="checker-heading"><div><span class="section-kicker">MEASURED MERCURY · EXPLORATORY CALCULATION</span><h2>Check Your Catch</h2><p>Select a real station and fish species. The calculation uses measured historical total mercury at that station, not simulated values. It is a research estimate, not an official consumption recommendation.</p></div><a href="https://www.alabamapublichealth.gov/tox/fish-advisories.html" target="_blank" rel="noopener noreferrer">View official advisories ↗</a></div>
@@ -74,7 +75,7 @@
           </div>
           <div class="form-bottom">
             <div class="source-period-grid">
-              <div class="field"><label for="period">Measurements from</label><div class="field-control"><span aria-hidden="true">◷</span><select id="period"><option value="all">2000–2024 (all available)</option><option value="20s">2020–2024</option><option value="10s">2010–2019</option><option value="70s">2000–2009</option><option value="2024">2024 only</option></select></div></div>
+              <div class="field"><label for="period">Measurements from</label><div class="field-control"><span aria-hidden="true">◷</span><select id="period"><option value="all">Loading periods…</option></select></div></div>
               <div class="field"><label for="sampling">Individual / composite measurements</label><div class="field-control"><span aria-hidden="true">▤</span><select id="sampling"><option value="preferred">Individual preferred; composites when no individual</option><option value="individual">Individual only</option><option value="composite">Composite only</option><option value="all">All results (may overlap)</option></select></div></div>
             </div>
             <p class="data-source-note" id="dataLoadStatus" role="status">Loading station measurements from the research dataset…</p>
@@ -99,11 +100,11 @@
     </div>
   </div>
   <div class="feature-grid">
-    <section class="feature-card" id="modeling"><div class="feature-icon">▤</div><div><span class="section-kicker">FUTURE DEVELOPMENT</span><h2>Predictive modeling & monitoring priorities</h2><p>Future AI-based models will estimate mercury concentrations in unmonitored waterbodies and identify where additional sampling could help the most. The site will distinguish observed values from predictions and show uncertainty.</p><div class="feature-pills"><span>● Observed</span><span>◇ Predicted</span><span>⌁ Uncertainty</span><span>◎ Sampling priority</span></div><p class="feature-note">No trained model or model outputs are included in V2.</p></div></section>
+    <section class="feature-card" id="modeling"><div class="feature-icon">▤</div><div><span class="section-kicker">FUTURE DEVELOPMENT</span><h2>Predictive modeling & monitoring priorities</h2><p>Future AI-based models will estimate mercury concentrations in unmonitored waterbodies and identify where additional sampling could help the most. The site will distinguish observed values from predictions and show uncertainty.</p><div class="feature-pills"><span>● Observed</span><span>◇ Predicted</span><span>⌁ Uncertainty</span><span>◎ Sampling priority</span></div><p class="feature-note">No trained model or model outputs are included in this prototype.</p></div></section>
     <section class="feature-card" id="methods"><div class="feature-icon">∑</div><div><span class="section-kicker">SCIENTIFIC FOUNDATION</span><h2>Transparent methods</h2><p>The tool combines real historical total-mercury measurements with the EPA noncancer consumption-rate formula. The calculator is exploratory: official advisories, other contaminants, and location-specific exposure review are not integrated.</p><button type="button" class="text-link" data-dialog="method">View the equation and assumptions →</button></div></section>
     <section class="feature-card" id="guidance"><div class="feature-icon">✚</div><div><span class="section-kicker">HEALTH & SAFETY</span><h2>Plain-language guidance</h2><p>People who are pregnant, planning pregnancy, breastfeeding, or feeding children need special attention. The first public release must explain portions, give warnings clearly, and never label unsampled fish as safe.</p><a class="text-link" href="https://www.alabamapublichealth.gov/tox/fish-advisories.html" target="_blank" rel="noopener noreferrer">Read the state's current advice ↗</a></div></section>
   </div>
-  <section class="about-strip" id="about"><div><strong>Alabama Fish Advisory Tool</strong><p>Independent research demonstration. Not affiliated with or endorsed by the State of Alabama, FDA, or EPA.</p></div><div><span>Mercury data: <b>2000–2024 observations</b></span><span>Model: <b>not trained</b></span><span>Advisories: <b>external link only</b></span></div></section>
+  <section class="about-strip" id="about"><div><strong>Alabama Fish Advisory Tool</strong><p>Independent research demonstration. Not affiliated with or endorsed by the State of Alabama, FDA, or EPA.</p></div><div><span>Mercury data: <b><span data-period-label>Loading…</span> observations</b></span><span>Model: <b>not trained</b></span><span>Advisories: <b>external link only</b></span></div></section>
 </div>
 </main>
 <footer><div>© 2026 Alabama Fish Advisory Tool · Research prototype</div><div><a href="#top">Back to top ↑</a><a href="https://www.alabamapublichealth.gov/tox/fish-advisories.html" target="_blank" rel="noopener noreferrer">Official Alabama advisories ↗</a></div></footer>
