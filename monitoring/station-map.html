@@ -97,7 +97,7 @@ Choose a species and period to color each sampling station by its median detecte
 <div class="map-wrap"><div id="map"></div><div class="status-badge" id="mapStatus">Loading real mercury measurements…</div>
 <div id="fallback" class="map-fallback"><svg id="fallbackSvg" viewBox="0 0 820 760" role="img" aria-label="Coordinate plot of monitoring stations"></svg><div class="fb-note">Online map unavailable. This is a coordinate-only plot, not a geographic basemap. Select a point for its measurements.</div></div>
 </div></div>
-<script src="../mercury-data.js?v=4"></script>
+<script src="../mercury-data.js?v=5"></script>
 <script>(function(){
 'use strict';
 const Data=window.MercuryData, $=id=>document.getElementById(id);
@@ -175,7 +175,7 @@ function updateSummary(){
 }
 function detail(i,scroll=true){
  selected=i;
- // The embedded map can populate the homepage checker using the selected real station and filters.
+ // The embedded map can populate the homepage checker using the selected waterbody and filters.
  if(window.parent!==window){
    try{window.parent.postMessage({source:'alabama-mercury-explorer',type:'station-selection',
      stationId:S[i].id,speciesName:$('species').value==='*'?null:SPECIES[Number($('species').value)],

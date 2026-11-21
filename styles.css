@@ -56,3 +56,6 @@ html[data-theme="light"] .map-stage #map .leaflet-tile-pane{filter:none}
 
 /* Respect native hidden state; the result panel must never show both result states. */
 .result-empty[hidden], #filledResult[hidden]{display:none!important}
+
+/* Catch location and calculation status */
+#locationCoverage{border-left:3px solid var(--cyan-2);padding:8px 12px;background:var(--surface-2);border-radius:4px;margin:10px 0 6px} #calculationStatus.estimate-available{border-color:var(--line);background:var(--surface-2)} #calculationStatus.estimate-available b,#calculationStatus.estimate-available .metric-alert{color:var(--cyan-2)} #calculationStatus .text-link{font-size:11px;text-align:left;margin-top:6px} #resultStationDetail{line-height:1.6;overflow-wrap:anywhere} #specificStation{min-width:0;width:100%}
